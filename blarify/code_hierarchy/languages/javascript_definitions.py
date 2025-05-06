@@ -30,7 +30,7 @@ class JavascriptDefinitions(LanguageDefinitions):
             return JavascriptDefinitions._is_variable_declaration_arrow_function(node)
 
         return LanguageDefinitions._should_create_node_base_implementation(
-            node, ["class_declaration", "function_declaration", "method_definition", "interface_declaration"]
+            node, ["class_declaration", "function_declaration", "method_definition", "interface_declaration", "enum_declaration"]
         )
 
     @staticmethod
@@ -113,4 +113,5 @@ class JavascriptDefinitions(LanguageDefinitions):
             "function_declaration": NodeLabels.FUNCTION,
             "method_definition": NodeLabels.FUNCTION,
             "interface_declaration": NodeLabels.CLASS,
+            "enum_declaration": NodeLabels.ENUM,
         }[type]

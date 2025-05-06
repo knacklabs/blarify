@@ -4,6 +4,7 @@ from ..file_node import FileNode
 from ..folder_node import FolderNode
 from ..function_node import FunctionNode
 from ..types.node_labels import NodeLabels
+from ..enum_node import EnumNode
 
 from typing import Optional, Union, TYPE_CHECKING
 
@@ -108,6 +109,32 @@ class NodeFactory:
         )
 
     @staticmethod
+    def create_enum_node(
+        enum_name: str,
+        path: str,
+        definition_range: "Reference",
+        node_range: "Reference",
+        code_text: str,
+        body_node: "TreeSitterNode",
+        level: int,
+        tree_sitter_node: "TreeSitterNode",
+        parent: Union[FileNode, ClassNode, FunctionNode] = None,
+        graph_environment: "GraphEnvironment" = None,
+    ) -> EnumNode:
+        return EnumNode(
+            name=enum_name,
+            path=path,
+            definition_range=definition_range,
+            node_range=node_range,
+            code_text=code_text,
+            body_node=body_node,
+            level=level,
+            tree_sitter_node=tree_sitter_node,
+            parent=parent,
+            graph_environment=graph_environment,
+        )
+
+    @staticmethod
     def create_node_based_on_label(
         kind: NodeLabels,
         name: str,
@@ -137,6 +164,19 @@ class NodeFactory:
         elif kind == NodeLabels.FUNCTION:
             return NodeFactory.create_function_node(
                 function_name=name,
+                path=path,
+                definition_range=definition_range,
+                node_range=node_range,
+                code_text=code_text,
+                body_node=body_node,
+                level=level,
+                parent=parent,
+                tree_sitter_node=tree_sitter_node,
+                graph_environment=graph_environment,
+            )
+        elif kind == NodeLabels.ENUM:
+            return NodeFactory.create_enum_node(
+                enum_name=name,
                 path=path,
                 definition_range=definition_range,
                 node_range=node_range,

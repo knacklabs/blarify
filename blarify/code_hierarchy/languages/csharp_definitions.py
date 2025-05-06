@@ -32,6 +32,7 @@ class CsharpDefinitions(LanguageDefinitions):
                 "interface_declaration",
                 "constructor_declaration",
                 "record_declaration",
+                "enum_declaration",
             ],
         )
 
@@ -54,6 +55,7 @@ class CsharpDefinitions(LanguageDefinitions):
             "interface_declaration": NodeLabels.CLASS,
             "constructor_declaration": NodeLabels.FUNCTION,
             "record_declaration": NodeLabels.CLASS,
+            "enum_declaration": NodeLabels.ENUM,
         }[type]
 
     def get_language_file_extensions() -> Set[str]:

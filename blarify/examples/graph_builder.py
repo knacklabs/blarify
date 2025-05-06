@@ -8,18 +8,19 @@ import os
 
 def build(root_path: str = None):
     graph_builder = GraphBuilder(
-        root_path=root_path, extensions_to_skip=[".json"], names_to_skip=["__pycache__", ".venv", ".git"]
+        root_path=root_path, extensions_to_skip=[".json"], names_to_skip=["__pycache__", ".venv", ".git", "node_modules", "venv", "dist"]
     )
     graph = graph_builder.build()
 
     relationships = graph.get_relationships_as_objects()
     nodes = graph.get_nodes_as_objects()
 
-    save_to_falkordb(relationships, nodes)
+    # save_to_falkordb(relationships, nodes)
+    save_to_neo4j(relationships, nodes)
 
 
 def save_to_neo4j(relationships, nodes):
-    graph_manager = Neo4jManager(repo_id="repo", entity_id="organization")
+    graph_manager = Neo4jManager(repo_id="repo-3", entity_id="organization-3", uri="neo4j://localhost:7687", user="neo4j", password="1234567890")
 
     print(f"Saving graph with {len(nodes)} nodes and {len(relationships)} relationships")
     graph_manager.save_graph(nodes, relationships)
@@ -40,5 +41,10 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     dotenv.load_dotenv()
-    root_path = os.getenv("ROOT_PATH")
+    # root_path = os.getenv("ROOT_PATH")
+
+    # root_path="/Users/hitesh/workspace/code-for-import/code-py"
+
+    root_path = "/Users/hitesh/workspace/code-for-import/code"
+
     build(root_path=root_path)

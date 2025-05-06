@@ -6,6 +6,7 @@ class NodeLabels(Enum):
     FILE = "FILE"
     FUNCTION = "FUNCTION"
     CLASS = "CLASS"
+    ENUM = "ENUM"
     METHOD = "METHOD"
     MODULE = "MODULE"
     DELETED = "DELETED"

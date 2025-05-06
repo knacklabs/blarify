@@ -49,6 +49,8 @@ class RelationshipCreator:
             return RelationshipType.FUNCTION_DEFINITION
         elif defined_node.label == NodeLabels.CLASS:
             return RelationshipType.CLASS_DEFINITION
+        elif defined_node.label == NodeLabels.ENUM:
+            return RelationshipType.ENUM_DEFINITION
         else:
             raise ValueError(f"Node {defined_node.label} is not a valid definition node")
 
