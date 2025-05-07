@@ -52,6 +52,7 @@ class LspQueryHelper:
             CsharpDefinitions,
             GoDefinitions,
             PhpDefinitions,
+            JavaDefinitions,
         )
 
         if extension in PythonDefinitions.get_language_file_extensions():
@@ -68,6 +69,8 @@ class LspQueryHelper:
             return GoDefinitions
         elif extension in PhpDefinitions.get_language_file_extensions():
             return PhpDefinitions
+        elif extension in JavaDefinitions.get_language_file_extensions():
+            return JavaDefinitions
         else:
             raise FileExtensionNotSupported(f'File extension "{extension}" is not supported)')
 
