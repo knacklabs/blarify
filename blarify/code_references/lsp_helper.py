@@ -7,7 +7,7 @@ from blarify.vendor.multilspy import SyncLanguageServer
 from blarify.utils.path_calculator import PathCalculator
 
 from .types.Reference import Reference
-from blarify.graph.node import DefinitionNode
+# from blarify.graph.node import DefinitionNode
 
 from blarify.vendor.multilspy.multilspy_config import MultilspyConfig
 from blarify.vendor.multilspy.multilspy_logger import MultilspyLogger

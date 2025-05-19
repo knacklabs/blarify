@@ -2,7 +2,7 @@ from blarify.project_graph_creator import ProjectGraphCreator
 from blarify.project_file_explorer import ProjectFilesIterator
 from blarify.project_file_explorer import ProjectFileStats
 from blarify.project_graph_updater import ProjectGraphUpdater
-from blarify.project_graph_diff_creator import PreviousNodeState, ProjectGraphDiffCreator
+from blarify.project_graph_diff_creator import ChangeType, FileDiff, PreviousNodeState, ProjectGraphDiffCreator
 from blarify.db_managers.neo4j_manager import Neo4jManager
 from blarify.code_references import LspQueryHelper
 from blarify.graph.graph_environment import GraphEnvironment
@@ -49,7 +49,10 @@ def main(root_path: str = None, blarignore_path: str = None):
     lsp_query_helper.shutdown_exit_close()
 
 
-def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = None):
+def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = None, repoId: str = None, entity_id: str = None, 
+              graph_environment_name: str = None, 
+              pr_environment_name: str = None,
+              pr_number: str = None):
     lsp_query_helper = LspQueryHelper(root_uri=root_uri)
     lsp_query_helper.start()
 
@@ -58,8 +61,6 @@ def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = Non
         blarignore_path=blarignore_path,
     )
 
-    repoId = "test"
-    entity_id = "test"
     graph_manager = Neo4jManager(repoId, entity_id)
 
     graph_diff_creator = ProjectGraphDiffCreator(
@@ -67,8 +68,8 @@ def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = Non
         lsp_query_helper=lsp_query_helper,
         project_files_iterator=project_files_iterator,
         file_diffs=file_diffs,
-        graph_environment=GraphEnvironment("dev", "MAIN", root_uri),
-        pr_environment=GraphEnvironment("dev", "pr-123", root_uri),
+        graph_environment=GraphEnvironment(graph_environment_name, "MAIN", root_uri),
+        pr_environment=GraphEnvironment(pr_environment_name, pr_number, root_uri),
     )
 
     graph = graph_diff_creator.build()
@@ -165,30 +166,21 @@ def main_diff_with_previous(
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     dotenv.load_dotenv()
-    root_path = os.getenv("ROOT_PATH")
-    blarignore_path = os.getenv("BLARIGNORE_PATH")
-    main(root_path=root_path, blarignore_path=blarignore_path)
-    # main_diff(
-    #     file_diffs=[
-    #         FileDiff(
-    #             path="file:///home/juan/devel/blar/lsp-poc/blarify/graph/node/utils/node_factory.py",
-    #             diff_text="diff+++",
-    #             change_type=ChangeType.ADDED,
-    #         ),
-    #         FileDiff(
-    #             path="file:///home/juan/devel/blar/lsp-poc/blarify/graph/relationship/relationship_type.py",
-    #             diff_text="diff+++",
-    #             change_type=ChangeType.ADDED,
-    #         ),
-    #         FileDiff(
-    #             path="file:///home/juan/devel/blar/lsp-poc/blarify/graph/relationship/relationship_creator.py",
-    #             diff_text="diff+++",
-    #             change_type=ChangeType.DELETED,
-    #         ),
-    #     ],
-    #     root_uri=root_path,
-    #     blarignore_path=blarignore_path,
-    # )
+    root_path = "/Users/cawdev/Desktop/code-review/code-review/sasssssxz/java-code/1"
+    blarignore_path = "/Users/cawdev/Desktop/blarify/.blarignore"
+    # main(root_path=root_path, blarignore_path=blarignore_path)
+
+    main_diff(
+        file_diffs=[
+            FileDiff(
+                path="file:///Users/cawdev/Desktop/code-review/code-review/sasssssxz/java-code/1/ArrayGenerator.java",
+                diff_text="diff+++",
+                change_type=ChangeType.ADDED,
+            ),
+        ],
+        root_uri=root_path,
+        blarignore_path=blarignore_path,
+    )
 
     print("Updating")
     # main_update(
