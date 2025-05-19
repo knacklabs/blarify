@@ -77,10 +77,43 @@ def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = Non
     relationships = graph.get_relationships_as_objects()
     nodes = graph.get_nodes_as_objects()
 
+    for node in nodes:
+        __convert_path_to_relative_path(node, root_uri)
+
     print(f"Saving graph with {len(nodes)} nodes and {len(relationships)} relationships")
     graph_manager.save_graph(nodes, relationships)
     graph_manager.close()
     lsp_query_helper.shutdown_exit_close()
+
+
+def __convert_path_to_relative_path(node: dict, root_path: str):
+        """
+        Converts an absolute file path in the node's 'attributes.path' to a relative path 
+        with respect to the configured root path.
+        This method modifies the input node in place. If the 'path' attribute is missing 
+        or empty, the method does nothing. If the path starts with 'file://', that prefix 
+        is removed before conversion.
+        Example:
+            Given:
+                node["attributes"]["path"] = "file:///user/hitesh/code-review/src/config.ts"
+                self.config.root_path = "/user/hitesh/code-review"
+            Result:
+                node["attributes"]["path"] = "src/config.ts"
+        Args:
+            node (dict): A dictionary representing a node, expected to contain an 
+                        'attributes' key with a 'path' subkey.
+        Returns:
+            None
+        """
+        absolutePath = node.get("attributes", {}).get("path", "")
+
+        if not absolutePath:
+            return
+
+        if absolutePath.startswith('file://'):
+            absolutePath = absolutePath.replace('file://', '')
+            node["attributes"]["path"] = '/' + os.path.relpath(absolutePath, root_path)
+
 
 
 def main_update(updated_files: list, root_uri: str = None, blarignore_path: str = None):
