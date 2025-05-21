@@ -68,7 +68,7 @@ def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = Non
         lsp_query_helper=lsp_query_helper,
         project_files_iterator=project_files_iterator,
         file_diffs=file_diffs,
-        graph_environment=GraphEnvironment(graph_environment_name, "MAIN", root_uri),
+        graph_environment=GraphEnvironment(graph_environment_name, "repo", root_uri),
         pr_environment=GraphEnvironment(pr_environment_name, pr_number, root_uri),
     )
 
