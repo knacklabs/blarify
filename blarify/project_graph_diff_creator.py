@@ -1,3 +1,4 @@
+import os
 from blarify.graph.node.utils.node_factory import NodeFactory
 from blarify.graph.node.types.node_labels import NodeLabels
 from blarify.project_graph_creator import ProjectGraphCreator
@@ -17,6 +18,7 @@ from blarify.graph.node.utils.id_calculator import IdCalculator
 from blarify.utils.path_calculator import PathCalculator
 from blarify.graph.node import Node, DefinitionNode
 from blarify.utils.relative_id_calculator import RelativeIdCalculator
+import concurrent.futures
 
 
 class ChangeType(Enum):
@@ -260,7 +262,19 @@ class ProjectGraphDiffCreator(ProjectGraphCreator):
         identifiers = helper.get_all_identifiers(file_node)
         filtered_identifiers = self.remove_definitions_from_identifiers(definitions, identifiers)
 
-        return {self.lsp_query_helper.get_definition_path_for_reference(ref, file_node.extension) for ref in filtered_identifiers}
+        def get_path_safe(ref):
+            try:
+                return self.lsp_query_helper.get_definition_path_for_reference(ref, file_node.extension)
+            except Exception:
+                return None
+
+        max_workers = min(32, os.cpu_count() * 5)
+        print(f"Max workers: {max_workers}")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(get_path_safe, filtered_identifiers))
+
+        return {result for result in results if result is not None}
+
 
     def remove_definitions_from_identifiers(self, definitions, identifiers):
         return [identifier for identifier in identifiers if identifier not in definitions]
