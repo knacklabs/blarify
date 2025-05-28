@@ -1,3 +1,4 @@
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
@@ -103,7 +104,7 @@ class ProjectGraphCreator:
         folders = list(self.project_files_iterator)
         
         # Process folders in parallel
-        max_workers = min(len(folders), 8)  # Limit to 8 threads to avoid overwhelming the system
+        max_workers = min(len(folders), (os.cpu_count() or 1) * 2)
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all folder processing tasks
