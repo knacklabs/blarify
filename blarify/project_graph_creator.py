@@ -1,4 +1,6 @@
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 from blarify.code_hierarchy.languages.go_definitions import GoDefinitions
 from blarify.code_hierarchy.languages.php_definitions import PhpDefinitions
 from blarify.code_references import LspQueryHelper, FileExtensionNotSupported
@@ -36,6 +38,7 @@ class ProjectGraphCreator:
     lsp_query_helper: LspQueryHelper
     project_files_iterator: ProjectFilesIterator
     graph: Graph
+    _graph_lock: Lock  # Thread lock for graph operations
     languages: dict = {
         ".py": PythonDefinitions,
         ".js": JavascriptDefinitions,
@@ -48,6 +51,7 @@ class ProjectGraphCreator:
         ".php": PhpDefinitions,
         ".java": JavaDefinitions,
     }
+    parallel_processing: bool
 
     def __init__(
         self,
@@ -55,11 +59,14 @@ class ProjectGraphCreator:
         lsp_query_helper: LspQueryHelper,
         project_files_iterator: ProjectFilesIterator,
         graph_environment: "GraphEnvironment" = None,
+        parallel_processing: bool = False,
     ):
         self.root_path = root_path
         self.lsp_query_helper = lsp_query_helper
         self.project_files_iterator = project_files_iterator
         self.graph_environment = graph_environment or GraphEnvironment("blarify", "repo", self.root_path)
+        self.parallel_processing = parallel_processing
+        self._graph_lock = Lock()  # Initialize thread lock
 
         self.graph = Graph()
 
@@ -80,12 +87,54 @@ class ProjectGraphCreator:
     def _create_code_hierarchy(self):
         start_time = time.time()
 
-        for folder in self.project_files_iterator:
-            self._process_folder(folder)
+        if self.parallel_processing:
+            self._create_code_hierarchy_parallel()
+        else:
+            self._create_code_hierarchy_sequential()
 
         end_time = time.time()
         execution_time = end_time - start_time
-        logger.info(f"Execution time of create_code_hierarchy: {execution_time:.2f} seconds")
+        processing_type = "parallel" if self.parallel_processing else "sequential"
+        logger.info(f"Execution time of create_code_hierarchy ({processing_type}): {execution_time:.2f} seconds")
+
+    def _create_code_hierarchy_parallel(self):
+        """Parallel implementation of code hierarchy creation"""
+        # Collect all folders to process
+        folders = list(self.project_files_iterator)
+        
+        # Process folders in parallel
+        max_workers = min(len(folders), 8)  # Limit to 8 threads to avoid overwhelming the system
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all folder processing tasks
+            future_to_folder = {executor.submit(self._process_folder_parallel, folder): folder for folder in folders}
+            
+            # Process completed tasks
+            for future in as_completed(future_to_folder):
+                folder = future_to_folder[future]
+                try:
+                    future.result()  # This will raise any exception that occurred
+                except Exception as exc:
+                    logger.error(f'Folder {folder.uri_path} generated an exception: {exc}')
+                    raise exc
+
+    def _create_code_hierarchy_sequential(self):
+        """Sequential implementation of code hierarchy creation (original)"""
+        for folder in self.project_files_iterator:
+            self._process_folder(folder)
+
+    def _process_folder_parallel(self, folder: "Folder") -> None:
+        """Parallel version of _process_folder with thread-safe graph operations"""
+        folder_node = self._add_or_get_folder_node_parallel(folder)
+        folder_nodes = self._create_subfolder_nodes_parallel(folder, folder_node)
+        
+        # Thread-safe graph operations
+        with self._graph_lock:
+            folder_node.relate_nodes_as_contain_relationship(folder_nodes)
+            self.graph.add_nodes(folder_nodes)
+
+        files = folder.files
+        self._process_files_parallel(files, parent_folder=folder_node)
 
     def _process_folder(self, folder: "Folder") -> None:
         folder_node = self._add_or_get_folder_node(folder)
@@ -96,6 +145,26 @@ class ProjectGraphCreator:
 
         files = folder.files
         self._process_files(files, parent_folder=folder_node)
+
+    def _add_or_get_folder_node_parallel(self, folder: "Folder", parent_folder: "Folder" = None) -> "FolderNode":
+        """Thread-safe version of _add_or_get_folder_node"""
+        with self._graph_lock:
+            if self.graph.has_folder_node_with_path(folder.uri_path):
+                return self.graph.get_folder_node_by_path(folder.uri_path)
+            else:
+                folder_node = NodeFactory.create_folder_node(
+                    folder, parent=parent_folder, graph_environment=self.graph_environment
+                )
+                self.graph.add_node(folder_node)
+                return folder_node
+
+    def _create_subfolder_nodes_parallel(self, folder: "Folder", folder_node: "FolderNode") -> List["Node"]:
+        """Thread-safe version of _create_subfolder_nodes"""
+        nodes = []
+        for sub_folder in folder.folders:
+            node = self._add_or_get_folder_node_parallel(sub_folder, parent_folder=folder_node)
+            nodes.append(node)
+        return nodes
 
     def _add_or_get_folder_node(self, folder: "Folder", parent_folder: "Folder" = None) -> "FolderNode":
         if self.graph.has_folder_node_with_path(folder.uri_path):
@@ -114,6 +183,42 @@ class ProjectGraphCreator:
             nodes.append(node)
 
         return nodes
+
+    def _process_files_parallel(self, files: List["File"], parent_folder: "FolderNode") -> None:
+        """Process files in parallel within a folder"""
+        if not files:
+            return
+            
+        # Process files in parallel, but limit concurrency to avoid overwhelming the system
+        max_workers = min(len(files), 4)  # Limit to 4 threads per folder
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all file processing tasks
+            future_to_file = {executor.submit(self._process_file_parallel, file, parent_folder): file for file in files}
+            
+            # Process completed tasks
+            for future in as_completed(future_to_file):
+                file = future_to_file[future]
+                try:
+                    future.result()  # This will raise any exception that occurred
+                except Exception as exc:
+                    logger.error(f'File {file.uri_path} generated an exception: {exc}')
+                    raise exc
+
+    def _process_file_parallel(self, file: "File", parent_folder: "FolderNode") -> None:
+        """Thread-safe version of _process_file"""
+        tree_sitter_helper = self._get_tree_sitter_for_file_extension(file.extension)
+        self._try_initialize_directory(file)
+        file_nodes = self._create_file_nodes(
+            file=file, parent_folder=parent_folder, tree_sitter_helper=tree_sitter_helper
+        )
+        
+        # Thread-safe graph operations
+        with self._graph_lock:
+            self.graph.add_nodes(file_nodes)
+            file_node = self._get_file_node_from_file_nodes(file_nodes)
+            file_node.skeletonize()
+            parent_folder.relate_node_as_contain_relationship(file_node)
 
     def _process_files(self, files: List["File"], parent_folder: "FolderNode") -> None:
         for file in files:

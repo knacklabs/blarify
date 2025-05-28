@@ -20,7 +20,7 @@ def build(root_path: str = None):
 
 
 def save_to_neo4j(relationships, nodes):
-    graph_manager = Neo4jManager(repo_id="repo-6", entity_id="organization-6", uri="neo4j://localhost:7687", user="neo4j", password="1234567890")
+    graph_manager = Neo4jManager(repo_id="", entity_id="jayanth", uri="neo4j://localhost:7687", user="neo4j", password="1234567890")
 
     print(f"Saving graph with {len(nodes)} nodes and {len(relationships)} relationships")
     graph_manager.save_graph(nodes, relationships)
@@ -45,6 +45,6 @@ if __name__ == "__main__":
 
     # root_path="/Users/hitesh/workspace/code-for-import/code-py"
 
-    root_path = "/Users/hitesh/workspace/code-for-import/java-code"
+    root_path = "/Users/hitesh/workspace/java-code"
 
     build(root_path=root_path)

@@ -70,6 +70,7 @@ def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = Non
         file_diffs=file_diffs,
         graph_environment=GraphEnvironment(graph_environment_name, "repo", root_uri),
         pr_environment=GraphEnvironment(pr_environment_name, pr_number, root_uri),
+        parallel_processing=True,
     )
 
     graph = graph_diff_creator.build()
@@ -196,23 +197,40 @@ def main_diff_with_previous(
     lsp_query_helper.shutdown_exit_close()
 
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     dotenv.load_dotenv()
-    root_path = "/Users/cawdev/Desktop/code-review/code-review/sasssssxz/java-code/1"
+    root_path = "/Users/hitesh/workspace/java-code-pr/PR/java-code"
     blarignore_path = "/Users/cawdev/Desktop/blarify/.blarignore"
     # main(root_path=root_path, blarignore_path=blarignore_path)
 
+    file_diffs = [
+        FileDiff(
+            path=f"file://{root_path}/ArrayGenerator.java",
+            diff_text="diff++",
+            change_type=ChangeType.MODIFIED,
+        ),
+        FileDiff(
+            path=f"file://{root_path}/ArrayProcessor.java",
+            diff_text="diff++",
+            change_type=ChangeType.MODIFIED,
+        ),
+        FileDiff(
+            path=f"file://{root_path}/ArrayProcessor2.java",
+            diff_text="diff++",
+            change_type=ChangeType.DELETED,
+        ),
+    ]
+
     main_diff(
-        file_diffs=[
-            FileDiff(
-                path="file:///Users/cawdev/Desktop/code-review/code-review/sasssssxz/java-code/1/ArrayGenerator.java",
-                diff_text="diff+++",
-                change_type=ChangeType.ADDED,
-            ),
-        ],
+        file_diffs=file_diffs,
         root_uri=root_path,
-        blarignore_path=blarignore_path,
+        repoId="",
+        entity_id="jayanth",
+        graph_environment_name="blarify",
+        pr_environment_name="blarify",
+        pr_number="123",
     )
 
     print("Updating")
@@ -254,3 +272,4 @@ if __name__ == "__main__":
     #         ),
     #     ],
     # )
+

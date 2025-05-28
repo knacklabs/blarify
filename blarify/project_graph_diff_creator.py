@@ -60,8 +60,9 @@ class ProjectGraphDiffCreator(ProjectGraphCreator):
         file_diffs: List[FileDiff],
         graph_environment: "GraphEnvironment" = None,
         pr_environment: "GraphEnvironment" = None,
+        parallel_processing: bool = False,
     ):
-        super().__init__(root_path, lsp_query_helper, project_files_iterator, graph_environment=graph_environment)
+        super().__init__(root_path, lsp_query_helper, project_files_iterator, graph_environment=graph_environment, parallel_processing=parallel_processing)
         self.graph = Graph()
         self.external_relationship_store = ExternalRelationshipStore()
 
