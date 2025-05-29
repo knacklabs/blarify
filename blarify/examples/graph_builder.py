@@ -45,6 +45,5 @@ if __name__ == "__main__":
 
     # root_path="/Users/hitesh/workspace/code-for-import/code-py"
 
-    root_path = "/Users/hitesh/workspace/code-for-import/java-code"
-
+    root_path = "/Users/hitesh/workspace/java-code"
     build(root_path=root_path)

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 import asyncio
-
+import threading
 import logging
 
 logger = logging.getLogger(__name__)
@@ -92,9 +92,20 @@ class LspQueryHelper:
         language_definitions = self.get_language_definition_for_extension(extension)
         language = language_definitions.get_language_name()
 
+        # First check without lock (fast path)
         if language in self.language_to_lsp_server:
             return self.language_to_lsp_server[language]
-        else:
+        
+        # Use lock for creation (slow path)
+        if not hasattr(self, '_lsp_creation_lock'):
+            self._lsp_creation_lock = threading.Lock()
+        
+        with self._lsp_creation_lock:
+            # Double-check pattern: another thread might have created it while we waited
+            if language in self.language_to_lsp_server:
+                return self.language_to_lsp_server[language]
+            
+            # Create and store the LSP server
             new_lsp = self._create_lsp_server(language_definitions, timeout)
             self.language_to_lsp_server[language] = new_lsp
             self._initialize_lsp_server(language, new_lsp)
