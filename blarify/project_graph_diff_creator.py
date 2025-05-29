@@ -268,7 +268,7 @@ class ProjectGraphDiffCreator(ProjectGraphCreator):
             except Exception:
                 return None
 
-        max_workers = min(32, os.cpu_count() * 10)
+        max_workers = min(32, os.cpu_count() * 6)
         print(f"Max workers: {max_workers}")
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             results = list(executor.map(get_path_safe, filtered_identifiers))
