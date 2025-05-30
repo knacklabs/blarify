@@ -10,7 +10,7 @@
     "rootUri": "$rootUri",
     "capabilities": {},
     "initializationOptions": {},
-    "trace": "off",
+    "trace": "on",
     "workspaceFolders": [
         {
             "uri": "$uri",
