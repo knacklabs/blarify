@@ -54,6 +54,8 @@ def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = Non
               graph_environment_name: str = None, 
               pr_environment_name: str = None,
               pr_number: str = None):
+    
+    print("Starting LSP query helper")
     lsp_query_helper = LspQueryHelper(root_uri=root_uri)
     lsp_query_helper.start()
 
