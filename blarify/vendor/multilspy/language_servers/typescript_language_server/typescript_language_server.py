@@ -193,10 +193,10 @@ class TypeScriptLanguageServer(LanguageServer):
             try:
                 init_response = await asyncio.wait_for(
                     self.server.send.initialize(initialize_params), 
-                    timeout=30.0  # 30 second timeout
+                    timeout=80.0  # 80 second timeout
                 )
             except asyncio.TimeoutError:
-                self.logger.log("Initialize request timed out after 30 seconds", logging.ERROR)
+                self.logger.log("Initialize request timed out after 80 seconds", logging.ERROR)
                 raise Exception("TypeScript language server initialization timed out")
             
 
