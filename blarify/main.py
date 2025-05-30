@@ -57,15 +57,17 @@ def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = Non
     
     print("Starting LSP query helper")
     lsp_query_helper = LspQueryHelper(root_uri=root_uri)
-    lsp_query_helper.start()
+    print("LSP query helper started")
 
+    lsp_query_helper.start()
+    print("LSP query helper started")
     project_files_iterator = ProjectFilesIterator(
         root_path=root_uri,
         blarignore_path=blarignore_path,
     )
-
+    print("Project files iterator created")
     graph_manager = Neo4jManager(repoId, entity_id)
-
+    print("Graph manager created")
     graph_diff_creator = ProjectGraphDiffCreator(
         root_path=root_uri,
         lsp_query_helper=lsp_query_helper,
@@ -74,20 +76,20 @@ def main_diff(file_diffs: list, root_uri: str = None, blarignore_path: str = Non
         graph_environment=GraphEnvironment(graph_environment_name, "repo", root_uri),
         pr_environment=GraphEnvironment(pr_environment_name, pr_number, root_uri),
     )
-
+    print("Graph diff creator created")
     start = time.perf_counter()
-
+    print("Starting graph diff creator")
     graph = graph_diff_creator.build()
-
+    print("Graph diff creator finished")
     end = time.perf_counter()
     print(f"Time taken: {end - start} seconds")
 
     relationships = graph.get_relationships_as_objects()
     nodes = graph.get_nodes_as_objects()
-
+    print("Nodes and relationships fetched")
     for node in nodes:
         __convert_path_to_relative_path(node, root_uri)
-
+    print("Nodes and relationships converted")
     print(f"Saving graph with {len(nodes)} nodes and {len(relationships)} relationships")
     graph_manager.save_graph(nodes, relationships)
     graph_manager.close()
