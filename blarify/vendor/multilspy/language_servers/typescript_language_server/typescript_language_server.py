@@ -186,7 +186,7 @@ class TypeScriptLanguageServer(LanguageServer):
             )
 
             self.logger.log(
-                "Sending initialize request from LSP client to LSP server and awaiting response 2 haha",
+                "Sending initialize request from LSP client to LSP server and awaiting response 2 omg",
                 logging.INFO,
             )
             # Add timeout to prevent hanging in Lambda environment
