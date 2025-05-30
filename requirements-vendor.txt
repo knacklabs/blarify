@@ -1,1 +1,3 @@
-git+https://github.com/blarApp/multilspy.git
+git+https://github.com/knacklabs/multilspy.git
+
+
