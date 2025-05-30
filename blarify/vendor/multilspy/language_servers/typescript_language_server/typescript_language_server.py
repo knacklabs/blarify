@@ -167,6 +167,11 @@ class TypeScriptLanguageServer(LanguageServer):
                 "Sending initialize request from LSP client to LSP server and awaiting response 1",
                 logging.INFO,
             )
+
+            self.logger.log(
+                "Sending initialize request from LSP client to LSP server and awaiting response 2 haha",
+                logging.INFO,
+            )
             init_response = await self.server.send.initialize(initialize_params)
             
 
