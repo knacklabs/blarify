@@ -201,27 +201,40 @@ class LanguageServerHandler:
         Starts the language server process and creates a task to continuously read from its stdout to handle communications
         from the server to the client
         """
+        print(f"[LSP START] Starting language server with command: {self.process_launch_info.cmd}")
+        print(f"[LSP START] Working directory: {self.process_launch_info.cwd}")
+        print(f"[LSP START] Environment variables: {self.process_launch_info.env}")
+        
         child_proc_env = os.environ.copy()
         child_proc_env.update(self.process_launch_info.env)
-        self.process = await asyncio.create_subprocess_shell(
-            self.process_launch_info.cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stdin=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env=child_proc_env,
-            cwd=self.process_launch_info.cwd,
-        )
+        
+        try:
+            self.process = await asyncio.create_subprocess_shell(
+                self.process_launch_info.cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=child_proc_env,
+                cwd=self.process_launch_info.cwd,
+            )
+            print(f"[LSP START] Process started successfully with PID: {self.process.pid}")
+        except Exception as e:
+            print(f"[LSP START ERROR] Failed to start process: {e}")
+            raise
 
         self.loop = asyncio.get_event_loop()
         self.tasks[self.task_counter] = self.loop.create_task(self.run_forever())
         self.task_counter += 1
         self.tasks[self.task_counter] = self.loop.create_task(self.run_forever_stderr())
         self.task_counter += 1
+        
+        print(f"[LSP START] Started {len(self.tasks)} background tasks for stdout/stderr handling")
 
     async def stop(self) -> None:
         """
         Sends the terminate signal to the language server process and waits for it to exit, with a timeout, killing it if necessary
         """
+        print("[LSP STOP] Stopping language server process")
         for task in self.tasks.values():
             task.cancel()
 
@@ -231,6 +244,7 @@ class LanguageServerHandler:
         self.process = None
 
         if process:
+            print(f"[LSP STOP] Waiting for process {process.pid} to exit")
             # TODO: Ideally, we should terminate the process here,
             # However, there's an issue with asyncio terminating processes documented at
             # https://bugs.python.org/issue35539 and https://bugs.python.org/issue41320
@@ -238,21 +252,26 @@ class LanguageServerHandler:
             wait_for_end = process.wait()
             try:
                 await asyncio.wait_for(wait_for_end, timeout=60)
+                print(f"[LSP STOP] Process {process.pid} exited successfully")
             except asyncio.TimeoutError:
+                print(f"[LSP STOP] Process {process.pid} timed out, killing it")
                 process.kill()
 
     async def shutdown(self) -> None:
         """
         Perform the shutdown sequence for the client, including sending the shutdown request to the server and notifying it of exit
         """
+        print("[LSP SHUTDOWN] Starting shutdown sequence")
         await self.send.shutdown()
         self._received_shutdown = True
+        print("[LSP SHUTDOWN] Sending exit notification")
         self.notify.exit()
         if self.process and self.process.stdout:
             self.process.stdout.set_exception(StopLoopException())
             # This yields the control to the event loop to allow the exception to be handled
             # in the run_forever and run_forever_stderr methods
             await asyncio.sleep(0)
+        print("[LSP SHUTDOWN] Shutdown sequence completed")
 
     def _log(self, message: str) -> None:
         """
@@ -271,6 +290,13 @@ class LanguageServerHandler:
                 line = await self.process.stdout.readline()
                 if not line:
                     continue
+                
+                # Print raw stdout for debugging
+                raw_line = line.decode(ENCODING, errors='ignore').strip()
+                if raw_line:
+                    print(f"[LSP STDOUT RAW] {raw_line}")
+                    self._log(f"LSP stdout raw: {raw_line}")
+                
                 try:
                     num_bytes = content_length(line)
                 except ValueError:
@@ -282,6 +308,14 @@ class LanguageServerHandler:
                 if not line:
                     continue
                 body = await self.process.stdout.readexactly(num_bytes)
+                
+                # Print the body content for debugging
+                try:
+                    body_str = body.decode(ENCODING, errors='ignore')
+                    print(f"[LSP STDOUT BODY] {body_str}")
+                    self._log(f"LSP stdout body: {body_str}")
+                except Exception as e:
+                    print(f"[LSP STDOUT BODY ERROR] Could not decode body: {e}")
 
                 self.tasks[self.task_counter] = asyncio.get_event_loop().create_task(self._handle_body(body))
                 self.task_counter += 1
@@ -298,40 +332,58 @@ class LanguageServerHandler:
                 line = await self.process.stderr.readline()
                 if not line:
                     continue
-                self._log("LSP stderr: " + line.decode(ENCODING))
-        except (BrokenPipeError, ConnectionResetError, StopLoopException):
+                
+                # Enhanced stderr logging with print statements
+                decoded_line = line.decode(ENCODING, errors='ignore').strip()
+                if decoded_line:
+                    print(f"[LSP STDERR] {decoded_line}")
+                    self._log(f"LSP stderr: {decoded_line}")
+        except (BrokenPipeError, ConnectionResetError, StopLoopException) as e:
+            print(f"[LSP STDERR ERROR] Exception in stderr handler: {e}")
             pass
 
     async def _handle_body(self, body: bytes) -> None:
         """
         Parse the body text received from the language server process and invoke the appropriate handler
         """
+        print(f"[LSP HANDLE] Processing message body of {len(body)} bytes")
         try:
-            await self._receive_payload(json.loads(body))
+            payload = json.loads(body)
+            print(f"[LSP HANDLE] Parsed JSON payload: {payload}")
+            await self._receive_payload(payload)
         except IOError as ex:
+            print(f"[LSP HANDLE ERROR] IOError parsing body: {ex}")
             self._log(f"malformed {ENCODING}: {ex}")
         except UnicodeDecodeError as ex:
+            print(f"[LSP HANDLE ERROR] UnicodeDecodeError parsing body: {ex}")
             self._log(f"malformed {ENCODING}: {ex}")
         except json.JSONDecodeError as ex:
+            print(f"[LSP HANDLE ERROR] JSONDecodeError parsing body: {ex}")
             self._log(f"malformed JSON: {ex}")
 
     async def _receive_payload(self, payload: StringDict) -> None:
         """
         Determine if the payload received from server is for a request, response, or notification and invoke the appropriate handler
         """
+        print(f"[LSP RECEIVE] Processing payload: {payload}")
         if self.logger:
             self.logger("server", "client", payload)
         try:
             if "method" in payload:
                 if "id" in payload:
+                    print(f"[LSP RECEIVE] Handling request: {payload.get('method')}")
                     await self._request_handler(payload)
                 else:
+                    print(f"[LSP RECEIVE] Handling notification: {payload.get('method')}")
                     await self._notification_handler(payload)
             elif "id" in payload:
+                print(f"[LSP RECEIVE] Handling response for ID: {payload.get('id')}")
                 await self._response_handler(payload)
             else:
+                print(f"[LSP RECEIVE ERROR] Unknown payload type: {payload}")
                 self._log(f"Unknown payload type: {payload}")
         except Exception as err:
+            print(f"[LSP RECEIVE ERROR] Error handling server payload: {err}")
             self._log(f"Error handling server payload: {err}")
 
     def send_notification(self, method: str, params: Optional[dict] = None) -> None:
@@ -378,7 +430,10 @@ class LanguageServerHandler:
         Send the payload to the server by writing to its stdin synchronously
         """
         if not self.process or not self.process.stdin:
+            print("[LSP SEND ERROR] No process or stdin available for sending payload")
             return
+        
+        print(f"[LSP SEND SYNC] Sending payload: {payload}")
         msg = create_message(payload)
         if self.logger:
             self.logger("client", "server", payload)
@@ -389,7 +444,10 @@ class LanguageServerHandler:
         Send the payload to the server by writing to its stdin asynchronously.
         """
         if not self.process or not self.process.stdin:
+            print("[LSP SEND ERROR] No process or stdin available for sending payload")
             return
+        
+        print(f"[LSP SEND ASYNC] Sending payload: {payload}")
         msg = create_message(payload)
         if self.logger:
             self.logger("client", "server", payload)
@@ -412,12 +470,16 @@ class LanguageServerHandler:
         """
         Handle the response received from the server for a request, using the id to determine the request
         """
+        print(f"[LSP RESPONSE] Processing response for ID {response['id']}: {response}")
         request = self._response_handlers.pop(response["id"])
         if "result" in response and "error" not in response:
+            print(f"[LSP RESPONSE] Success result for ID {response['id']}")
             await request.on_result(response["result"])
         elif "result" not in response and "error" in response:
+            print(f"[LSP RESPONSE] Error result for ID {response['id']}: {response['error']}")
             await request.on_error(Error.from_lsp(response["error"]))
         else:
+            print(f"[LSP RESPONSE] Invalid response format for ID {response['id']}")
             await request.on_error(Error(ErrorCodes.InvalidRequest, ""))
 
     async def _request_handler(self, response: StringDict) -> None:
@@ -427,8 +489,11 @@ class LanguageServerHandler:
         method = response.get("method", "")
         params = response.get("params")
         request_id = response.get("id")
+        print(f"[LSP REQUEST] Handling server request: method={method}, id={request_id}, params={params}")
+        
         handler = self.on_request_handlers.get(method)
         if not handler:
+            print(f"[LSP REQUEST ERROR] No handler for method: {method}")
             self.send_error_response(
                 request_id,
                 Error(
@@ -438,10 +503,14 @@ class LanguageServerHandler:
             )
             return
         try:
-            self.send_response(request_id, await handler(params))
+            result = await handler(params)
+            print(f"[LSP REQUEST] Handler result for {method}: {result}")
+            self.send_response(request_id, result)
         except Error as ex:
+            print(f"[LSP REQUEST ERROR] Handler error for {method}: {ex}")
             self.send_error_response(request_id, ex)
         except Exception as ex:
+            print(f"[LSP REQUEST ERROR] Handler exception for {method}: {ex}")
             self.send_error_response(request_id, Error(ErrorCodes.InternalError, str(ex)))
 
     async def _notification_handler(self, response: StringDict) -> None:
@@ -450,15 +519,21 @@ class LanguageServerHandler:
         """
         method = response.get("method", "")
         params = response.get("params")
+        print(f"[LSP NOTIFICATION] Handling server notification: method={method}, params={params}")
+        
         handler = self.on_notification_handlers.get(method)
         if not handler:
+            print(f"[LSP NOTIFICATION] No handler for method: {method}")
             self._log(f"unhandled {method}")
             return
         try:
             await handler(params)
+            print(f"[LSP NOTIFICATION] Handler completed for {method}")
         except asyncio.CancelledError:
+            print(f"[LSP NOTIFICATION] Handler cancelled for {method}")
             return
         except Exception as ex:
+            print(f"[LSP NOTIFICATION ERROR] Handler exception for {method}: {ex}")
             if (not self._received_shutdown) and self.logger:
                 self.logger(
                     "client",

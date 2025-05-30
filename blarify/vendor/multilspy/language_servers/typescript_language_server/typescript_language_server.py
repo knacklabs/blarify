@@ -7,7 +7,6 @@ import json
 import shutil
 import logging
 import os
-import pwd
 import subprocess
 import pathlib
 from contextlib import asynccontextmanager
@@ -71,20 +70,32 @@ class TypeScriptLanguageServer(LanguageServer):
         is_npm_installed = shutil.which('npm') is not None
         assert is_npm_installed, "npm is not installed or isn't in PATH. Please install npm and try again."
 
-        # Install typescript and typescript-language-server if not already installed, as a non-root user
+        # Install typescript and typescript-language-server if not already installed
         if not os.path.exists(tsserver_ls_dir):
+            logger.log(f"Creating TypeScript language server directory at: {tsserver_ls_dir}", logging.INFO)
             os.makedirs(tsserver_ls_dir, exist_ok=True)
             for dependency in runtime_dependencies:
-                user = pwd.getpwuid(os.getuid()).pw_name
-                subprocess.run(
-                    dependency["command"], 
-                    shell=True, 
-                    check=True, 
-                    user=user, 
-                    cwd=tsserver_ls_dir,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
+                logger.log(f"Installing dependency: {dependency['id']}", logging.INFO)
+                # Remove user specification for Lambda compatibility
+                try:
+                    subprocess.run(
+                        dependency["command"], 
+                        shell=True, 
+                        check=True, 
+                        cwd=tsserver_ls_dir,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        timeout=120  # 2 minute timeout for npm install
+                    )
+                    logger.log(f"Successfully installed: {dependency['id']}", logging.INFO)
+                except subprocess.TimeoutExpired:
+                    logger.log(f"Timeout installing dependency: {dependency['id']}", logging.ERROR)
+                    raise Exception(f"Timeout installing {dependency['id']}")
+                except subprocess.CalledProcessError as e:
+                    logger.log(f"Failed to install dependency {dependency['id']}: {e}", logging.ERROR)
+                    raise Exception(f"Failed to install {dependency['id']}: {e}")
+        else:
+            logger.log(f"TypeScript language server directory already exists at: {tsserver_ls_dir}", logging.INFO)
         
         tsserver_executable_path = os.path.join(tsserver_ls_dir, "node_modules", ".bin", "typescript-language-server")
         assert os.path.exists(tsserver_executable_path), "typescript-language-server executable not found. Please install typescript-language-server and try again."
@@ -156,15 +167,43 @@ class TypeScriptLanguageServer(LanguageServer):
 
         async with super().start_server():
             self.logger.log("Starting TypeScript server process", logging.INFO)
-            await self.server.start()
+            try:
+                await self.server.start()
+                self.logger.log("TypeScript server process started successfully", logging.INFO)
+            except Exception as e:
+                self.logger.log(f"Failed to start TypeScript server process: {e}", logging.ERROR)
+                raise
+                
             initialize_params = self._get_initialize_params(self.repository_root_path)
 
             self.logger.log(
                 "Sending initialize request from LSP client to LSP server and awaiting response",
                 logging.INFO,
             )
-            init_response = await self.server.send.initialize(initialize_params)
+            self.logger.log(
+                "Sending initialize request from LSP client to LSP server and awaiting response 1",
+                logging.INFO,
+            )
+
+            self.logger.log(
+                "Sending initialize request from LSP client to LSP server and awaiting response 2 omg",
+                logging.INFO,
+            )
+            # Add timeout to prevent hanging in Lambda environment
+            try:
+                init_response = await asyncio.wait_for(
+                    self.server.send.initialize(initialize_params), 
+                    timeout=80.0  # 80 second timeout
+                )
+            except asyncio.TimeoutError:
+                self.logger.log("Initialize request timed out after 80 seconds", logging.ERROR)
+                raise Exception("TypeScript language server initialization timed out")
             
+
+            self.logger.log(
+                "Sending initialize request from LSP client to LSP server and awaiting response 2",
+                logging.INFO,
+            )
             # TypeScript-specific capability checks
             assert init_response["capabilities"]["textDocumentSync"] == 2
             assert "completionProvider" in init_response["capabilities"]
