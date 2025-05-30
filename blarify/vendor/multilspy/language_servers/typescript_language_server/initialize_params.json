@@ -8,41 +8,7 @@
     "locale": "en",
     "rootPath": "$rootPath",
     "rootUri": "$rootUri",
-    "capabilities": {
-        "workspace": {
-            "applyEdit": false,
-            "configuration": false,
-            "didChangeWatchedFiles": {
-                "dynamicRegistration": false
-            },
-            "symbol": {
-                "dynamicRegistration": false
-            },
-            "executeCommand": {
-                "dynamicRegistration": false
-            },
-            "workspaceFolders": false
-        },
-        "textDocument": {
-            "synchronization": {
-                "dynamicRegistration": false,
-                "willSave": false,
-                "willSaveWaitUntil": false,
-                "didSave": false
-            },
-            "definition": {
-                "dynamicRegistration": false,
-                "linkSupport": false
-            },
-            "references": {
-                "dynamicRegistration": false
-            },
-            "documentSymbol": {
-                "dynamicRegistration": false,
-                "hierarchicalDocumentSymbolSupport": false
-            }
-        }
-    },
+    "capabilities": {},
     "initializationOptions": {},
     "trace": "off",
     "workspaceFolders": [
