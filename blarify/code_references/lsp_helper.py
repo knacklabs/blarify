@@ -130,26 +130,41 @@ class LspQueryHelper:
 
     def _request_references_with_exponential_backoff(self, node, lsp):
         timeout = 10
-        for _ in range(1, 3):
+        for attempt in range(1, 3):
             try:
                 references = lsp.request_references(
                     file_path=PathCalculator.get_relative_path_from_uri(root_uri=self.root_uri, uri=node.path),
                     line=node.definition_range.start_dict["line"],
                     column=node.definition_range.start_dict["character"],
                 )
-
                 return references
 
-            except (TimeoutError, ConnectionResetError, Error):
+            except (TimeoutError, ConnectionResetError, BrokenPipeError, ConnectionAbortedError) as e:
+                # Only restart for connection/communication issues
                 timeout = timeout * 2
-
-                logger.warning(
-                    f"Error requesting references for {self.root_uri}, {node.definition_range}, attempting to restart LSP server with timeout {timeout}"
+                logger.error(
+                    f"LSP communication error - root_uri: {self.root_uri}, node.path: {node.path}, "
+                    f"definition_range: {node.definition_range}, attempt: {attempt}, "
+                    f"exception: {type(e).__name__}: {e}",
+                    exc_info=True
                 )
                 self._restart_lsp_for_extension(extension=node.extension)
                 lsp = self._get_or_create_lsp_server(extension=node.extension, timeout=timeout)
+                
+            except Exception as e:
+                # Log other errors but don't restart - these are likely legitimate LSP responses
+                logger.error(
+                    f"LSP references request failed - root_uri: {self.root_uri}, node.path: {node.path}, "
+                    f"definition_range: {node.definition_range}, "
+                    f"exception: {type(e).__name__}: {e}",
+                    exc_info=True
+                )
+                return []
 
-        logger.error("Failed to get references, returning empty list")
+        logger.error(
+            f"Failed to get references after all retries - root_uri: {self.root_uri}, "
+            f"node.path: {node.path}, definition_range: {node.definition_range}"
+        )
         return []
 
     def _restart_lsp_for_extension(self, extension):
@@ -218,26 +233,42 @@ class LspQueryHelper:
 
     def _request_definition_with_exponential_backoff(self, reference: Reference, lsp, extension):
         timeout = 10
-        for _ in range(1, 3):
+        for attempt in range(1, 3):
             try:
                 definitions = lsp.request_definition(
                     file_path=PathCalculator.get_relative_path_from_uri(root_uri=self.root_uri, uri=reference.uri),
                     line=reference.range.start.line,
                     column=reference.range.start.character,
                 )
-
                 return definitions
 
-            except (TimeoutError, ConnectionResetError, Error):
+            except (TimeoutError, ConnectionResetError, BrokenPipeError, ConnectionAbortedError) as e:
+                # Only restart for connection/communication issues
                 timeout = timeout * 2
-
-                logger.warning(
-                    f"Error requesting definitions for {self.root_uri}, {reference.start_dict}, attempting to restart LSP server with timeout {timeout}"
+                logger.error(
+                    f"LSP communication error - root_uri: {self.root_uri}, reference.uri: {reference.uri}, "
+                    f"reference_range: {reference.range}, attempt: {attempt}, "
+                    f"exception: {type(e).__name__}: {e}",
+                    exc_info=True
                 )
                 self._restart_lsp_for_extension(extension)
                 lsp = self._get_or_create_lsp_server(extension=extension, timeout=timeout)
+                
+            except Exception as e:
+                # Log other errors but don't restart - these are likely legitimate LSP responses
+                logger.error(
+                    f"LSP definition request failed - root_uri: {self.root_uri}, reference.uri: {reference.uri}, "
+                    f"reference_range: {reference.range}, "
+                    f"exception: {type(e).__name__}: {e}",
+                    exc_info=True
+                )
+                return []
 
-        logger.error("Failed to get references, returning empty list")
+        logger.error(
+            f"Failed to get definitions after all retries - root_uri: {self.root_uri}, "
+            f"reference.uri: {reference.uri}, reference_range: {reference.range}"
+        )
+
         return []
 
     def shutdown_exit_close(self) -> None:
