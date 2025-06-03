@@ -75,7 +75,7 @@ class LspQueryHelper:
         else:
             raise FileExtensionNotSupported(f'File extension "{extension}" is not supported)')
 
-    def _create_lsp_server(self, language_definitions: "LanguageDefinitions", timeout=15) -> SyncLanguageServer:
+    def _create_lsp_server(self, language_definitions: "LanguageDefinitions", timeout=60) -> SyncLanguageServer:
         language = language_definitions.get_language_name()
 
         config = MultilspyConfig.from_dict({"code_language": language})
@@ -89,7 +89,7 @@ class LspQueryHelper:
         DEPRECATED, LSP servers are started on demand
         """
 
-    def _get_or_create_lsp_server(self, extension, timeout=15) -> SyncLanguageServer:
+    def _get_or_create_lsp_server(self, extension, timeout=60) -> SyncLanguageServer:
         language_definitions = self.get_language_definition_for_extension(extension)
         language = language_definitions.get_language_name()
 
@@ -232,7 +232,7 @@ class LspQueryHelper:
         return definitions[0]["uri"]
 
     def _request_definition_with_exponential_backoff(self, reference: Reference, lsp, extension):
-        timeout = 10
+        timeout = 60
         for attempt in range(1, 3):
             try:
                 definitions = lsp.request_definition(

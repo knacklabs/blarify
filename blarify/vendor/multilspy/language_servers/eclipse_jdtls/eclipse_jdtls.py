@@ -24,6 +24,14 @@ from blarify.vendor.multilspy.multilspy_utils import FileUtils
 from blarify.vendor.multilspy.multilspy_utils import PlatformUtils
 from pathlib import PurePath
 
+# Import custom configuration fixes
+try:
+    from .custom_config import get_fixed_initialize_params, get_persistent_workspace_dir
+except ImportError:
+    # Fallback if custom_config doesn't exist
+    get_fixed_initialize_params = None
+    get_persistent_workspace_dir = None
+
 
 @dataclasses.dataclass
 class RuntimeDependencyPaths:
@@ -56,14 +64,19 @@ class EclipseJDTLS(LanguageServer):
         self.runtime_dependency_paths = runtime_dependency_paths
 
         # ws_dir is the workspace directory for the EclipseJDTLS server
-        ws_dir = str(
-            PurePath(
-                MultilspySettings.get_language_server_directory(),
-                "EclipseJDTLS",
-                "workspaces",
-                uuid.uuid4().hex,
+        if get_persistent_workspace_dir:
+            # Use persistent workspace directory based on repository path
+            ws_dir = get_persistent_workspace_dir(repository_root_path)
+        else:
+            # Fallback to original UUID-based approach
+            ws_dir = str(
+                PurePath(
+                    MultilspySettings.get_language_server_directory(),
+                    "EclipseJDTLS",
+                    "workspaces",
+                    uuid.uuid4().hex,
+                )
             )
-        )
 
         # shared_cache_location is the global cache used by Eclipse JDTLS across all workspaces
         shared_cache_location = str(
@@ -301,6 +314,10 @@ class EclipseJDTLS(LanguageServer):
         d["initializationOptions"]["settings"]["java"]["import"]["gradle"]["java"][
             "home"
         ] = self.runtime_dependency_paths.jre_path
+
+        # Apply custom configuration fixes if available
+        if get_fixed_initialize_params:
+            d = get_fixed_initialize_params(d)
 
         return d
 
