@@ -21,6 +21,7 @@ class Language(str, Enum):
     RUBY = "ruby"
     DART = "dart"
     PHP = "php"
+    KOTLIN = "kotlin"
 
     def __str__(self) -> str:
         return self.value

@@ -8,3 +8,4 @@ from .csharp_definitions import CsharpDefinitions
 from .go_definitions import GoDefinitions
 from .php_definitions import PhpDefinitions
 from .java_definitions import JavaDefinitions
+from .kotlin_definitions import KotlinDefinition
