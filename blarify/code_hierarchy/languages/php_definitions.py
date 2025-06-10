@@ -26,7 +26,7 @@ class PhpDefinitions(LanguageDefinitions):
 
     def should_create_node(node: Node) -> bool:
         return LanguageDefinitions._should_create_node_base_implementation(
-            node, ["class_delaration", "function_definition", "method_declaration", "enum_declaration"]
+            node, ["class_declaration", "function_definition", "method_declaration", "enum_declaration"]
         )
 
     def get_identifier_node(node: Node) -> Node:
@@ -40,6 +40,7 @@ class PhpDefinitions(LanguageDefinitions):
             "class_declaration": NodeLabels.CLASS,
             "function_definition": NodeLabels.FUNCTION,
             "method_declaration": NodeLabels.FUNCTION,
+            "enum_declaration": NodeLabels.ENUM,
         }[type]
 
     def get_language_file_extensions() -> Set[str]:
