@@ -121,6 +121,10 @@ class LanguageServer:
             from blarify.vendor.multilspy.language_servers.intelephense.intelephense import Intelephense
 
             return Intelephense(config, logger, repository_root_path)
+        elif config.code_language == Language.KOTLIN:
+            from blarify.vendor.multilspy.language_servers.kotlin_language_server.kotlin_language_server import KotlinLanguageServer
+
+            return KotlinLanguageServer(config, logger, repository_root_path)
         else:
             logger.log(
                 f"Language {config.code_language} is not supported", logging.ERROR

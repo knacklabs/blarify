@@ -15,6 +15,7 @@ from blarify.code_hierarchy.languages import (
     RubyDefinitions,
     CsharpDefinitions,
     JavaDefinitions,
+    KotlinDefinition
 )
 from typing import List, TYPE_CHECKING
 from blarify.logger import Logger
@@ -47,6 +48,7 @@ class ProjectGraphCreator:
         ".go": GoDefinitions,
         ".php": PhpDefinitions,
         ".java": JavaDefinitions,
+        ".kt": KotlinDefinition,
     }
 
     def __init__(

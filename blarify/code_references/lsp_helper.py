@@ -49,6 +49,7 @@ class LspQueryHelper:
             GoDefinitions,
             PhpDefinitions,
             JavaDefinitions,
+            KotlinDefinition,
         )
 
         if extension in PythonDefinitions.get_language_file_extensions():
@@ -67,6 +68,8 @@ class LspQueryHelper:
             return PhpDefinitions
         elif extension in JavaDefinitions.get_language_file_extensions():
             return JavaDefinitions
+        elif extension in KotlinDefinition.get_language_file_extensions():
+            return KotlinDefinition
         else:
             raise FileExtensionNotSupported(f'File extension "{extension}" is not supported)')
 
