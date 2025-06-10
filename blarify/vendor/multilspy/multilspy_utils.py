@@ -188,6 +188,7 @@ class DotnetVersion(str, Enum):
     V6 = "6"
     V7 = "7"
     V8 = "8"
+    V9 = "9"
     VMONO = "mono"
 
 class PlatformUtils:
@@ -235,6 +236,8 @@ class PlatformUtils:
                 return DotnetVersion.V7
             elif version.startswith("6"):
                 return DotnetVersion.V6
+            elif version.startswith("9"):
+                return DotnetVersion.V9
             elif version.startswith("4"):
                 return DotnetVersion.V4
             else:
