@@ -150,14 +150,13 @@ class OmniSharp(LanguageServer):
         assert dotnet_version in [
             DotnetVersion.V6,
             DotnetVersion.V7,
-            DotnetVersion.V8,
-            DotnetVersion.V9
-        ], "Only dotnet version 6, 7, 8 and 9 are supported in multilspy at the moment"
+            DotnetVersion.V8, 
+        ], "Only dotnet version 6, 7, and 8are supported in multilspy at the moment"
 
         # TODO: Do away with this assumption
         # Currently, runtime binaries are not available for .Net 7 and .Net 8. Hence, we assume .Net 6 runtime binaries to be compatible with .Net 7, .Net 8
-        if dotnet_version in [DotnetVersion.V7, DotnetVersion.V8, DotnetVersion.V9, DotnetVersion.V6]:
-            dotnet_version = DotnetVersion.V9
+        if dotnet_version in [DotnetVersion.V7, DotnetVersion.V8]:
+            dotnet_version = DotnetVersion.V6
 
         runtime_dependencies = d["runtimeDependencies"]
         runtime_dependencies = [
