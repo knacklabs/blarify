@@ -1,4 +1,4 @@
-from blarify.code_hierarchy.languages.language_definitions import LanguageDefinitions
+from blarify.code_hierarchy.languages.language_definitions import LanguageDefinitions, IdentifierNodeNotFound
 from tree_sitter import Node, Parser, Language
 from typing import Dict, Optional, Set
 from blarify.graph.node import Node as GraphNode
@@ -9,6 +9,7 @@ from blarify.graph.relationship import RelationshipType
 import tree_sitter_kotlin as tskotlin
 
 class KotlinDefinition(LanguageDefinitions):
+
     def get_language_name() -> str:
         return "kotlin"
     
@@ -23,12 +24,19 @@ class KotlinDefinition(LanguageDefinitions):
             [
                 "function_declaration",
                 "class_declaration",
+                "primary_constructor",
                 "secondary_constructor",
             ],
         )
 
     def get_identifier_node(node: Node) -> Node:
-        return LanguageDefinitions._get_identifier_node_base_implementation(node)
+        if node.type == "secondary_constructor":
+            for child in node.children:
+                if child.type == "function_value_parameters":
+                    return child
+
+        res = KotlinDefinition._get_identifier_node_base_implementation(node)
+        return res
 
     def get_body_node(node: Node) -> Node:
         return LanguageDefinitions._get_body_node_base_implementation(node)
@@ -43,8 +51,20 @@ class KotlinDefinition(LanguageDefinitions):
         return {
             "class_declaration": NodeLabels.CLASS,
             "function_declaration": NodeLabels.FUNCTION,
+            "primary_constructor": NodeLabels.FUNCTION,
             "secondary_constructor": NodeLabels.FUNCTION,
         }[type]
+    
+    @staticmethod
+    def get_identifier_name(identifier_node: Node) -> str:
+        
+        if identifier_node.type == "primary_constructor":
+            return "primary_constructor"
+
+        if identifier_node.type == "function_value_parameters":
+            return f"constructor{identifier_node.text.decode('utf-8')}"
+
+        return identifier_node.text.decode("utf-8")
     
     def get_language_file_extensions() -> Set[str]:
         return {".kt"}
@@ -70,3 +90,10 @@ class KotlinDefinition(LanguageDefinitions):
                 "invocation_expression": RelationshipType.CALLS,
             },
         }
+
+    @staticmethod
+    def _get_identifier_node_base_implementation(node: Node) -> Node:
+        if(node.type == "primary_constructor"):
+            return node;
+    
+        return LanguageDefinitions._get_identifier_node_base_implementation(node)

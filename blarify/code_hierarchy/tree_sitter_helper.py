@@ -179,6 +179,10 @@ class TreeSitterHelper:
         return identifier_name, identifier_reference
 
     def _get_identifier_name(self, identifier_node: str) -> str:
+
+        if(hasattr(self.language_definitions, "get_identifier_name")):
+            return self.language_definitions.get_identifier_name(identifier_node)
+
         identifier_name = identifier_node.text.decode("utf-8")
         return identifier_name
 
