@@ -10,8 +10,6 @@ import tree_sitter_kotlin as tskotlin
 
 class KotlinDefinition(LanguageDefinitions):
 
-    secondary_constructor_count = 0
-
     def get_language_name() -> str:
         return "kotlin"
     
@@ -33,9 +31,8 @@ class KotlinDefinition(LanguageDefinitions):
 
     def get_identifier_node(node: Node) -> Node:
         if node.type == "secondary_constructor":
-            KotlinDefinition.secondary_constructor_count += 1
             for child in node.children:
-                if child.type == "constructor":
+                if child.type == "function_value_parameters":
                     return child
 
         res = KotlinDefinition._get_identifier_node_base_implementation(node)
@@ -64,8 +61,8 @@ class KotlinDefinition(LanguageDefinitions):
         if identifier_node.type == "primary_constructor":
             return "primary_constructor"
 
-        if identifier_node.type == "constructor":
-            return f"constructor_{KotlinDefinition.secondary_constructor_count}"
+        if identifier_node.type == "function_value_parameters":
+            return f"constructor{identifier_node.text.decode('utf-8')}"
 
         return identifier_node.text.decode("utf-8")
     
