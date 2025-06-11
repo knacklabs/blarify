@@ -45,5 +45,5 @@ if __name__ == "__main__":
 
     # root_path="/Users/hitesh/workspace/code-for-import/code-py"
 
-    root_path = "/Users/hitesh/kotlin-kg"
+    root_path = "/Users/hitesh/kotlin-kg/sub"
     build(root_path=root_path)
