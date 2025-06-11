@@ -12,13 +12,13 @@ import pathlib
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-from multilspy.multilspy_logger import MultilspyLogger
-from multilspy.language_server import LanguageServer
-from multilspy.lsp_protocol_handler.server import ProcessLaunchInfo
-from multilspy.lsp_protocol_handler.lsp_types import InitializeParams
-from multilspy.multilspy_config import MultilspyConfig
-from multilspy.multilspy_utils import FileUtils
-from multilspy.multilspy_utils import PlatformUtils
+from blarify.vendor.multilspy.multilspy_logger import MultilspyLogger
+from blarify.vendor.multilspy.language_server import LanguageServer
+from blarify.vendor.multilspy.lsp_protocol_handler.server import ProcessLaunchInfo
+from blarify.vendor.multilspy.lsp_protocol_handler.lsp_types import InitializeParams
+from blarify.vendor.multilspy.multilspy_config import MultilspyConfig
+from blarify.vendor.multilspy.multilspy_utils import FileUtils
+from blarify.vendor.multilspy.multilspy_utils import PlatformUtils
 
 
 @dataclasses.dataclass
