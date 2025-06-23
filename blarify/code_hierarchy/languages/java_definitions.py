@@ -68,10 +68,10 @@ class JavaDefinitions(LanguageDefinitions):
         return {
             NodeLabels.CLASS: {
                 "object_creation_expression": RelationshipType.INSTANTIATES,
-                "using_directive": RelationshipType.IMPORTS,
+                "import_declaration": RelationshipType.IMPORTS,
                 "variable_declaration": RelationshipType.TYPES,
                 "parameter": RelationshipType.TYPES,
-                "base_list": RelationshipType.INHERITS,
+                "super_interfaces": RelationshipType.INHERITS,
             },
             NodeLabels.FUNCTION: {
                 "invocation_expression": RelationshipType.CALLS,
