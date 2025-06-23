@@ -62,7 +62,7 @@ class PythonDefinitions(LanguageDefinitions):
         return {
             NodeLabels.CLASS: {
                 "import_from_statement": RelationshipType.IMPORTS,
-                "superclasses": RelationshipType.INHERITS,
+                "argument_list": RelationshipType.INHERITS, # Per the playground, `argument_list` is only used for inheritance
                 "call": RelationshipType.INSTANTIATES,
                 "typing": RelationshipType.TYPES,
                 "assignment": RelationshipType.TYPES,
