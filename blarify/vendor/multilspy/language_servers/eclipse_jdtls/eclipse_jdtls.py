@@ -145,9 +145,12 @@ class EclipseJDTLS(LanguageServer):
     def _download_and_setup_java_24(self, logger, jre_home_path: str, jre_path: str, platform_id: PlatformId):
 
         if platform_id != PlatformId.LINUX_x64:
+            logger.log(f"Skipping Java 24 setup for platform {platform_id}", logging.INFO)
             return
         
         download_url: str = 'https://download.oracle.com/java/24/latest/jdk-24_linux-x64_bin.tar.gz'
+
+        logger.log(f"Downloading Java 24 for platform {platform_id}", logging.INFO)
 
         tar_file_stream = urllib.request.urlopen(download_url)
         with tarfile.open(fileobj=tar_file_stream, mode='r|gz') as tar:
@@ -167,6 +170,9 @@ class EclipseJDTLS(LanguageServer):
                     shutil.move(src, dst)
                 
                 os.rmdir(extracted_dir)
+
+        logger.log(f"Java 24 setup for platform {platform_id} completed", logging.INFO)
+
         return
 
     def setupRuntimeDependencies(self, logger: MultilspyLogger, config: MultilspyConfig) -> RuntimeDependencyPaths:
