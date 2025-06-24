@@ -148,7 +148,8 @@ class EclipseJDTLS(LanguageServer):
             logger.log(f"Skipping Java 24 setup for platform {platform_id}", logging.INFO)
             return
         
-        download_url: str = 'https://download.oracle.com/java/24/latest/jdk-24_linux-x64_bin.tar.gz'
+        # download_url: str = 'https://download.oracle.com/java/24/latest/jdk-24_linux-x64_bin.tar.gz'
+        download_url: str = 'https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24.0.1+9/OpenJDK24U-jdk_x64_linux_hotspot_24.0.1_9.tar.gz'
 
         logger.log(f"Downloading Java 24 for platform {platform_id}", logging.INFO)
 
