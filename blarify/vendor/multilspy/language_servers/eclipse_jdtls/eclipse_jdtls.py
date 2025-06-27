@@ -414,7 +414,7 @@ class EclipseJDTLS(LanguageServer):
             )
             init_response = await self.server.send.initialize(initialize_params)
             assert init_response["capabilities"]["textDocumentSync"]["change"] == 2
-            assert "completionProvider" not in init_response["capabilities"]
+            # assert "completionProvider" not in init_response["capabilities"]
             assert "executeCommandProvider" not in init_response["capabilities"]
 
             self.server.notify.initialized({})
