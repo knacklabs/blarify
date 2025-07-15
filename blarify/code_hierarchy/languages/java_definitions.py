@@ -1,23 +1,26 @@
-from blarify.code_hierarchy.languages.language_definitions import LanguageDefinitions
-from tree_sitter import Node, Parser, Language
-from typing import Dict, Optional, Set
-from blarify.graph.node import Node as GraphNode
 from blarify.code_hierarchy.languages.FoundRelationshipScope import FoundRelationshipScope
-from blarify.graph.node import NodeLabels
+from .language_definitions import LanguageDefinitions
 from blarify.graph.relationship import RelationshipType
-
 import tree_sitter_java as tsjava
+from tree_sitter import Language, Parser
+from typing import Optional, Set, Dict
+from blarify.graph.node import NodeLabels
+from tree_sitter import Node
+from blarify.graph.node import Node as GraphNode
 
 
 class JavaDefinitions(LanguageDefinitions):
+    CONTROL_FLOW_STATEMENTS = []
+    CONSEQUENCE_STATEMENTS = []
+
     def get_language_name() -> str:
         return "java"
-    
+
     def get_parsers_for_extensions() -> Dict[str, Parser]:
         return {
             ".java": Parser(Language(tsjava.language())),
         }
-    
+
     def should_create_node(node: Node) -> bool:
         return LanguageDefinitions._should_create_node_base_implementation(
             node,
@@ -30,7 +33,7 @@ class JavaDefinitions(LanguageDefinitions):
                 "enum_declaration",
             ],
         )
-    
+
     def get_identifier_node(node: Node) -> Node:
         return LanguageDefinitions._get_identifier_node_base_implementation(node)
 
@@ -42,7 +45,7 @@ class JavaDefinitions(LanguageDefinitions):
             node_label=node.label,
             node_in_point_reference=node_in_point_reference,
         )
-    
+
     def get_node_label_from_type(type: str) -> NodeLabels:
         return {
             "class_declaration": NodeLabels.CLASS,
@@ -52,10 +55,10 @@ class JavaDefinitions(LanguageDefinitions):
             "record_declaration": NodeLabels.CLASS,
             "enum_declaration": NodeLabels.ENUM,
         }[type]
-    
+
     def get_language_file_extensions() -> Set[str]:
         return {".java"}
-    
+
     def _find_relationship_type(node_label: str, node_in_point_reference: Node) -> Optional[FoundRelationshipScope]:
         relationship_types = JavaDefinitions._get_relationship_types_by_label()
         relevant_relationship_types = relationship_types.get(node_label, {})
@@ -63,17 +66,29 @@ class JavaDefinitions(LanguageDefinitions):
         return LanguageDefinitions._traverse_and_find_relationships(
             node_in_point_reference, relevant_relationship_types
         )
-    
+
     def _get_relationship_types_by_label() -> dict[str, RelationshipType]:
         return {
             NodeLabels.CLASS: {
-                "object_creation_expression": RelationshipType.INSTANTIATES,
                 "import_declaration": RelationshipType.IMPORTS,
+                "using_directive": RelationshipType.IMPORTS,
+                "import_specifier": RelationshipType.IMPORTS,
+                "import_clause": RelationshipType.IMPORTS,
                 "variable_declaration": RelationshipType.TYPES,
                 "parameter": RelationshipType.TYPES,
+                "type_annotation": RelationshipType.TYPES,
+                "annotation_argument_list": RelationshipType.TYPES,
+                "formal_parameter": RelationshipType.TYPES,
+                "field_declaration": RelationshipType.TYPES,
+                "object_creation_expression": RelationshipType.INSTANTIATES,
+                "new_expression": RelationshipType.INSTANTIATES,
                 "super_interfaces": RelationshipType.INHERITS,
+                "base_list": RelationshipType.INHERITS,
+                "class_heritage": RelationshipType.INHERITS,
+                "variable_declarator": RelationshipType.ASSIGNS,
             },
             NodeLabels.FUNCTION: {
                 "invocation_expression": RelationshipType.CALLS,
+                "method_invocation": RelationshipType.CALLS,
             },
         }
