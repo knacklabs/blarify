@@ -10,26 +10,26 @@
     "rootUri": "pathlib.Path(repository_absolute_path).as_uri()",
     "capabilities": {
         "workspace": {
-            "applyEdit": true,
+            "applyEdit": false,
             "workspaceEdit": {
-                "documentChanges": true,
+                "documentChanges": false,
                 "resourceOperations": [
                     "create",
                     "rename",
                     "delete"
                 ],
                 "failureHandling": "textOnlyTransactional",
-                "normalizesLineEndings": true,
+                "normalizesLineEndings": false,
                 "changeAnnotationSupport": {
-                    "groupsOnLabel": true
+                    "groupsOnLabel": false
                 }
             },
             "didChangeConfiguration": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "didChangeWatchedFiles": {
-                "dynamicRegistration": true,
-                "relativePatternSupport": true
+                "dynamicRegistration": false,
+                "relativePatternSupport": false
             },
             "symbol": {
                 "dynamicRegistration": true,
@@ -86,13 +86,13 @@
                 "refreshSupport": true
             },
             "fileOperations": {
-                "dynamicRegistration": true,
-                "didCreate": true,
-                "didRename": true,
-                "didDelete": true,
-                "willCreate": true,
-                "willRename": true,
-                "willDelete": true
+                "dynamicRegistration": false,
+                "didCreate": false,
+                "didRename": false,
+                "didDelete": false,
+                "willCreate": false,
+                "willRename": false,
+                "willDelete": false
             },
             "inlineValue": {
                 "refreshSupport": true
@@ -106,7 +106,7 @@
         },
         "textDocument": {
             "publishDiagnostics": {
-                "relatedInformation": true,
+                "relatedInformation": false,
                 "versionSupport": false,
                 "tagSupport": {
                     "valueSet": [
@@ -114,8 +114,8 @@
                         2
                     ]
                 },
-                "codeDescriptionSupport": true,
-                "dataSupport": true
+                "codeDescriptionSupport": false,
+                "dataSupport": false
             },
             "synchronization": {
                 "dynamicRegistration": true,
@@ -124,17 +124,17 @@
                 "didSave": true
             },
             "completion": {
-                "dynamicRegistration": true,
-                "contextSupport": true,
+                "dynamicRegistration": false,
+                "contextSupport": false,
                 "completionItem": {
                     "snippetSupport": false,
-                    "commitCharactersSupport": true,
+                    "commitCharactersSupport": false,
                     "documentationFormat": [
                         "markdown",
                         "plaintext"
                     ],
-                    "deprecatedSupport": true,
-                    "preselectSupport": true,
+                    "deprecatedSupport": false,
+                    "preselectSupport": false,
                     "tagSupport": {
                         "valueSet": [
                             1
@@ -154,7 +154,7 @@
                             2
                         ]
                     },
-                    "labelDetailsSupport": true
+                    "labelDetailsSupport": false
                 },
                 "insertTextMode": 2,
                 "completionItemKind": {
@@ -196,23 +196,23 @@
                 }
             },
             "hover": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "contentFormat": [
                     "markdown",
                     "plaintext"
                 ]
             },
             "signatureHelp": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "signatureInformation": {
                     "documentationFormat": [
                         "markdown",
                         "plaintext"
                     ],
                     "parameterInformation": {
-                        "labelOffsetSupport": true
+                        "labelOffsetSupport": false
                     },
-                    "activeParameterSupport": true
+                    "activeParameterSupport": false
                 },
                 "contextSupport": true
             },
@@ -224,7 +224,7 @@
                 "dynamicRegistration": true
             },
             "documentHighlight": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "documentSymbol": {
                 "dynamicRegistration": true,
@@ -267,10 +267,10 @@
                 "labelSupport": true
             },
             "codeAction": {
-                "dynamicRegistration": true,
-                "isPreferredSupport": true,
-                "disabledSupport": true,
-                "dataSupport": true,
+                "dynamicRegistration": false,
+                "isPreferredSupport": false,
+                "disabledSupport": false,
+                "dataSupport": false,
                 "resolveSupport": {
                     "properties": [
                         "edit"
@@ -293,19 +293,19 @@
                 "honorsChangeAnnotations": false
             },
             "codeLens": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "formatting": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "rangeFormatting": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "onTypeFormatting": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "rename": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "prepareSupport": true,
                 "prepareSupportDefaultBehavior": 1,
                 "honorsChangeAnnotations": true
@@ -425,7 +425,7 @@
                 }
             },
             "diagnostic": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "relatedDocumentSupport": false
             }
         },
@@ -481,7 +481,7 @@
                         "java": {
                             "home": null
                         },
-                        "vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms100m -Xlog:disable",
+                        "vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m -Xlog:disable",
                         "lombokSupport": {
                             "enabled": true
                         },
@@ -521,16 +521,16 @@
                 },
                 "import": {
                     "maven": {
-                        "enabled": true,
+                        "enabled": false,
                         "offline": {
                             "enabled": false
                         },
                         "disableTestClasspathFlag": false
                     },
                     "gradle": {
-                        "enabled": true,
+                        "enabled": false,
                         "wrapper": {
-                            "enabled": true
+                            "enabled": false
                         },
                         "version": null,
                         "home": "abs(static/gradle-7.3.3)",
@@ -546,7 +546,7 @@
                             "home": null
                         },
                         "annotationProcessing": {
-                            "enabled": true
+                            "enabled": false
                         }
                     },
                     "exclusions": [
@@ -558,14 +558,14 @@
                     "generatesMetadataFilesAtProjectRoot": false
                 },
                 "maven": {
-                    "downloadSources": true,
-                    "updateSnapshots": true
+                    "downloadSources": false,
+                    "updateSnapshots": false
                 },
                 "eclipse": {
-                    "downloadSources": true
+                    "downloadSources": false
                 },
                 "referencesCodeLens": {
-                    "enabled": true
+                    "enabled": false
                 },
                 "signatureHelp": {
                     "enabled": true,

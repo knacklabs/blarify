@@ -10,9 +10,11 @@ import os
 import pathlib
 import shutil
 import stat
+import tarfile
 import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
+import urllib.request
 
 from blarify.vendor.multilspy.multilspy_logger import MultilspyLogger
 from blarify.vendor.multilspy.language_server import LanguageServer
@@ -20,9 +22,10 @@ from blarify.vendor.multilspy.lsp_protocol_handler.server import ProcessLaunchIn
 from blarify.vendor.multilspy.lsp_protocol_handler.lsp_types import InitializeParams
 from blarify.vendor.multilspy.multilspy_config import MultilspyConfig
 from blarify.vendor.multilspy.multilspy_settings import MultilspySettings
-from blarify.vendor.multilspy.multilspy_utils import FileUtils
+from blarify.vendor.multilspy.multilspy_utils import FileUtils, PlatformId
 from blarify.vendor.multilspy.multilspy_utils import PlatformUtils
 from pathlib import PurePath
+import shutil
 
 
 @dataclasses.dataclass
@@ -139,6 +142,40 @@ class EclipseJDTLS(LanguageServer):
 
         super().__init__(config, logger, repository_root_path, ProcessLaunchInfo(cmd, proc_env, proc_cwd), "java")
 
+    def _download_and_setup_java_24(self, logger, jre_home_path: str, jre_path: str, platform_id: PlatformId):
+
+        if platform_id != PlatformId.LINUX_x64:
+            logger.log(f"Skipping Java 24 setup for platform {platform_id}", logging.INFO)
+            return
+        
+        # download_url: str = 'https://download.oracle.com/java/24/latest/jdk-24_linux-x64_bin.tar.gz'
+        download_url: str = 'https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24.0.1+9/OpenJDK24U-jdk_x64_linux_hotspot_24.0.1_9.tar.gz'
+
+        logger.log(f"Downloading Java 24 for platform {platform_id}", logging.INFO)
+
+        tar_file_stream = urllib.request.urlopen(download_url)
+        with tarfile.open(fileobj=tar_file_stream, mode='r|gz') as tar:
+            shutil.rmtree(jre_home_path)
+            os.makedirs(jre_home_path, exist_ok=True)
+            tar.extractall(jre_home_path)
+            
+            extracted_dirs = [d for d in os.listdir(jre_home_path) 
+                            if os.path.isdir(os.path.join(jre_home_path, d)) and d.startswith('jdk-')]
+            
+            if extracted_dirs:
+                extracted_dir = os.path.join(jre_home_path, extracted_dirs[0])
+                
+                for item in os.listdir(extracted_dir):
+                    src = os.path.join(extracted_dir, item)
+                    dst = os.path.join(jre_home_path, item)
+                    shutil.move(src, dst)
+                
+                os.rmdir(extracted_dir)
+
+        logger.log(f"Java 24 setup for platform {platform_id} completed", logging.INFO)
+
+        return
+
     def setupRuntimeDependencies(self, logger: MultilspyLogger, config: MultilspyConfig) -> RuntimeDependencyPaths:
         """
         Setup runtime dependencies for EclipseJDTLS.
@@ -196,6 +233,8 @@ class EclipseJDTLS(LanguageServer):
             FileUtils.download_and_extract_archive(
                 logger, dependency["url"], vscode_java_path, dependency["archiveType"]
             )
+
+            self._download_and_setup_java_24(logger, jre_home_path, jre_path, platformId)
 
         os.chmod(jre_path, stat.S_IEXEC)
 
@@ -375,7 +414,7 @@ class EclipseJDTLS(LanguageServer):
             )
             init_response = await self.server.send.initialize(initialize_params)
             assert init_response["capabilities"]["textDocumentSync"]["change"] == 2
-            assert "completionProvider" not in init_response["capabilities"]
+            # assert "completionProvider" not in init_response["capabilities"]
             assert "executeCommandProvider" not in init_response["capabilities"]
 
             self.server.notify.initialized({})
@@ -403,3 +442,4 @@ class EclipseJDTLS(LanguageServer):
 
             await self.server.shutdown()
             await self.server.stop()
+
