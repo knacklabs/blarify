@@ -24,6 +24,9 @@ class RelationshipCreator:
             if node_referenced is None or node.id == node_referenced.id:
                 continue
 
+            if reference is None:
+                continue
+
             found_relationship_scope = tree_sitter_helper.get_reference_type(
                 original_node=node, reference=reference, node_referenced=node_referenced
             )

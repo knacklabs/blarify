@@ -124,7 +124,7 @@ class LspQueryHelper:
         return [Reference(reference) for reference in references]
 
     def _request_references_with_exponential_backoff(self, node, lsp):
-        timeout = 10
+        timeout = 30
         for attempt in range(1, 3):
             try:
                 references = lsp.request_references(
@@ -266,7 +266,7 @@ class LspQueryHelper:
         return definitions[0]["uri"]
 
     def _request_definition_with_exponential_backoff(self, reference: Reference, lsp, extension):
-        timeout = 10
+        timeout = 30
         for attempt in range(1, 3):
             try:
                 definitions = lsp.request_definition(

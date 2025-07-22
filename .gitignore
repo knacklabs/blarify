@@ -21,3 +21,4 @@ easy/
 !blarify/vendor/**/*.json
 
 venv/
+venv-*/
