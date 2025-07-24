@@ -7,17 +7,20 @@ import dataclasses
 import json
 import logging
 import os
+import shutil
 import stat
 import pathlib
 from contextlib import asynccontextmanager
+import tarfile
 from typing import AsyncIterator
+import urllib3
 
 from blarify.vendor.multilspy.multilspy_logger import MultilspyLogger
 from blarify.vendor.multilspy.language_server import LanguageServer
 from blarify.vendor.multilspy.lsp_protocol_handler.server import ProcessLaunchInfo
 from blarify.vendor.multilspy.lsp_protocol_handler.lsp_types import InitializeParams
 from blarify.vendor.multilspy.multilspy_config import MultilspyConfig
-from blarify.vendor.multilspy.multilspy_utils import FileUtils
+from blarify.vendor.multilspy.multilspy_utils import FileUtils, PlatformId
 from blarify.vendor.multilspy.multilspy_utils import PlatformUtils
 
 
@@ -57,6 +60,41 @@ class KotlinLanguageServer(LanguageServer):
             "kotlin",
         )
 
+    def _download_and_setup_java_24(self, logger, jre_home_path: str, jre_path: str, platform_id: PlatformId):
+
+        if platform_id != PlatformId.LINUX_x64:
+            logger.log(f"Skipping Java 24 setup for platform {platform_id}", logging.INFO)
+            return
+        
+        # download_url: str = 'https://download.oracle.com/java/24/latest/jdk-24_linux-x64_bin.tar.gz'
+        download_url: str = 'https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24.0.1+9/OpenJDK24U-jdk_x64_linux_hotspot_24.0.1_9.tar.gz'
+
+        logger.log(f"Downloading Java 24 for platform {platform_id}", logging.INFO)
+
+        tar_file_stream = urllib3.request.urlopen(download_url)
+        with tarfile.open(fileobj=tar_file_stream, mode='r|gz') as tar:
+            shutil.rmtree(jre_home_path)
+            os.makedirs(jre_home_path, exist_ok=True)
+            tar.extractall(jre_home_path)
+            
+            extracted_dirs = [d for d in os.listdir(jre_home_path) 
+                            if os.path.isdir(os.path.join(jre_home_path, d)) and d.startswith('jdk-')]
+            
+            if extracted_dirs:
+                extracted_dir = os.path.join(jre_home_path, extracted_dirs[0])
+                
+                for item in os.listdir(extracted_dir):
+                    src = os.path.join(extracted_dir, item)
+                    dst = os.path.join(jre_home_path, item)
+                    shutil.move(src, dst)
+                
+                os.rmdir(extracted_dir)
+
+        logger.log(f"Java 24 setup for platform {platform_id} completed", logging.INFO)
+
+        return
+
+
     def setup_runtime_dependencies(self, logger: MultilspyLogger, config: MultilspyConfig) -> KotlinRuntimeDependencyPaths:
         """
         Setup runtime dependencies for Kotlin Language Server.
@@ -91,6 +129,7 @@ class KotlinLanguageServer(LanguageServer):
             FileUtils.download_and_extract_archive(
                 logger, java_dependency["url"], java_dir, java_dependency["archiveType"]
             )
+            self._download_and_setup_java_24(logger, java_home_path, java_path, platform_id)
             # Make Java executable
             if not platform_id.value.startswith("win-"):
                 os.chmod(java_path, 0o755)

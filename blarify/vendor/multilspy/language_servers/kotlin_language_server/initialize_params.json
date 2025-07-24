@@ -10,29 +10,29 @@
     "rootUri": "pathlib.Path(repository_absolute_path).as_uri()",
     "capabilities": {
         "workspace": {
-            "applyEdit": true,
+            "applyEdit": false,
             "workspaceEdit": {
-                "documentChanges": true,
+                "documentChanges": false,
                 "resourceOperations": [
                     "create",
                     "rename",
                     "delete"
                 ],
                 "failureHandling": "textOnlyTransactional",
-                "normalizesLineEndings": true,
+                "normalizesLineEndings": false,
                 "changeAnnotationSupport": {
-                    "groupsOnLabel": true
+                    "groupsOnLabel": false
                 }
             },
             "didChangeConfiguration": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "didChangeWatchedFiles": {
-                "dynamicRegistration": true,
-                "relativePatternSupport": true
+                "dynamicRegistration": false,
+                "relativePatternSupport": false
             },
             "symbol": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "symbolKind": {
                     "valueSet": [
                         1,
@@ -75,38 +75,38 @@
                 }
             },
             "codeLens": {
-                "refreshSupport": true
+                "refreshSupport": false
             },
             "executeCommand": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "configuration": true,
             "workspaceFolders": true,
             "semanticTokens": {
-                "refreshSupport": true
+                "refreshSupport": false
             },
             "fileOperations": {
-                "dynamicRegistration": true,
-                "didCreate": true,
-                "didRename": true,
-                "didDelete": true,
-                "willCreate": true,
-                "willRename": true,
-                "willDelete": true
+                "dynamicRegistration": false,
+                "didCreate": false,
+                "didRename": false,
+                "didDelete": false,
+                "willCreate": false,
+                "willRename": false,
+                "willDelete": false
             },
             "inlineValue": {
-                "refreshSupport": true
+                "refreshSupport": false
             },
             "inlayHint": {
-                "refreshSupport": true
+                "refreshSupport": false
             },
             "diagnostics": {
-                "refreshSupport": true
+                "refreshSupport": false
             }
         },
         "textDocument": {
             "publishDiagnostics": {
-                "relatedInformation": true,
+                "relatedInformation": false,
                 "versionSupport": false,
                 "tagSupport": {
                     "valueSet": [
@@ -118,23 +118,23 @@
                 "dataSupport": true
             },
             "synchronization": {
-                "dynamicRegistration": true,
-                "willSave": true,
-                "willSaveWaitUntil": true,
-                "didSave": true
+                "dynamicRegistration": false,
+                "willSave": false,
+                "willSaveWaitUntil": false,
+                "didSave": false
             },
             "completion": {
-                "dynamicRegistration": true,
-                "contextSupport": true,
+                "dynamicRegistration": false,
+                "contextSupport": false,
                 "completionItem": {
                     "snippetSupport": false,
-                    "commitCharactersSupport": true,
+                    "commitCharactersSupport": false,
                     "documentationFormat": [
                         "markdown",
                         "plaintext"
                     ],
-                    "deprecatedSupport": true,
-                    "preselectSupport": true,
+                    "deprecatedSupport": false,
+                    "preselectSupport": false,
                     "tagSupport": {
                         "valueSet": [
                             1
@@ -154,7 +154,7 @@
                             2
                         ]
                     },
-                    "labelDetailsSupport": true
+                    "labelDetailsSupport": false
                 },
                 "insertTextMode": 2,
                 "completionItemKind": {
@@ -196,23 +196,23 @@
                 }
             },
             "hover": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "contentFormat": [
                     "markdown",
                     "plaintext"
                 ]
             },
             "signatureHelp": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "signatureInformation": {
                     "documentationFormat": [
                         "markdown",
                         "plaintext"
                     ],
                     "parameterInformation": {
-                        "labelOffsetSupport": true
+                        "labelOffsetSupport": false
                     },
-                    "activeParameterSupport": true
+                    "activeParameterSupport": false
                 },
                 "contextSupport": true
             },
@@ -267,10 +267,10 @@
                 "labelSupport": true
             },
             "codeAction": {
-                "dynamicRegistration": true,
-                "isPreferredSupport": true,
-                "disabledSupport": true,
-                "dataSupport": true,
+                "dynamicRegistration": false,
+                "isPreferredSupport": false,
+                "disabledSupport": false,
+                "dataSupport": false,
                 "resolveSupport": {
                     "properties": [
                         "edit"
@@ -293,26 +293,26 @@
                 "honorsChangeAnnotations": false
             },
             "codeLens": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "formatting": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "rangeFormatting": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "onTypeFormatting": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "rename": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "prepareSupport": true,
                 "prepareSupportDefaultBehavior": 1,
                 "honorsChangeAnnotations": true
             },
             "documentLink": {
-                "dynamicRegistration": true,
-                "tooltipSupport": true
+                "dynamicRegistration": false,
+                "tooltipSupport": false
             },
             "typeDefinition": {
                 "dynamicRegistration": true,
@@ -323,10 +323,10 @@
                 "linkSupport": true
             },
             "colorProvider": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "foldingRange": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "rangeLimit": 5000,
                 "lineFoldingOnly": true,
                 "foldingRangeKind": {
@@ -404,16 +404,16 @@
                 "augmentsSyntaxTokens": true
             },
             "linkedEditingRange": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "typeHierarchy": {
-                "dynamicRegistration": true
+                "dynamicRegistration": false
             },
             "inlineValue": {
                 "dynamicRegistration": true
             },
             "inlayHint": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "resolveSupport": {
                     "properties": [
                         "tooltip",
@@ -425,20 +425,20 @@
                 }
             },
             "diagnostic": {
-                "dynamicRegistration": true,
+                "dynamicRegistration": false,
                 "relatedDocumentSupport": false
             }
         },
         "window": {
             "showMessage": {
                 "messageActionItem": {
-                    "additionalPropertiesSupport": true
+                    "additionalPropertiesSupport": false
                 }
             },
             "showDocument": {
-                "support": true
+                "support": false
             },
-            "workDoneProgress": true
+            "workDoneProgress": false
         },
         "general": {
             "staleRequestSupport": {
@@ -485,12 +485,12 @@
             }
         },
         "diagnostics": {
-            "enabled": true,
+            "enabled": false,
             "level": 4,
             "debounceTime": 250
         },
         "scripts": {
-            "enabled": true,
+            "enabled": false,
             "buildScriptsEnabled": true
         },
         "indexing": {

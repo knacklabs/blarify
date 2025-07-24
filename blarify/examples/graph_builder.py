@@ -42,5 +42,6 @@ if __name__ == "__main__":
 
     dotenv.load_dotenv()
     root_path = os.getenv("ROOT_PATH")
-    root_path = "/Users/hitesh/workspace/java-code"
+    root_path = "/Users/hitesh/workspace/android-revamp"
+    # root_path = "/Users/hitesh/workspace/Magisk"
     build(root_path=root_path)

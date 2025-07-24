@@ -67,6 +67,9 @@ class TreeSitterHelper:
         start_point = (reference.range.start.line, reference.range.start.character)
         end_point = (reference.range.end.line, reference.range.end.character)
 
+        if node._tree_sitter_node is None:
+            return None
+
         return node._tree_sitter_node.descendant_for_point_range(start_point, end_point)
 
     def create_nodes_and_relationships_in_file(self, file: File, parent_folder: "FolderNode" = None) -> List["Node"]:
