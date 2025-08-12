@@ -1,6 +1,6 @@
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional, Dict, Any
 from hashlib import md5
-from blarify.format_verifier import FormatVerifier
+from blarify.utils.format_verifier import FormatVerifier
 import os
 
 from blarify.utils.relative_id_calculator import RelativeIdCalculator
@@ -16,8 +16,9 @@ class Node:
     path: str
     name: str
     level: int
-    parent: "Node"
-    graph_environment: "GraphEnvironment"
+    parent: Optional["Node"]
+    graph_environment: Optional["GraphEnvironment"]
+    layer: str
 
     def __init__(
         self,
@@ -25,15 +26,17 @@ class Node:
         path: str,
         name: str,
         level: int,
-        parent: "Node" = None,
-        graph_environment: "GraphEnvironment" = None,
-    ):
+        parent: Optional["Node"] = None,
+        graph_environment: Optional["GraphEnvironment"] = None,
+        layer: str = "code",
+    ) -> None:
         self.label = label
         self.path = path
         self.name = name
         self.level = level
         self.parent = parent
         self.graph_environment = graph_environment
+        self.layer = layer
 
         if not self.is_path_format_valid():
             raise ValueError(f"Path format is not valid: {self.path}")
@@ -68,7 +71,7 @@ class Node:
     def extension(self) -> str:
         return os.path.splitext(self.pure_path)[1]
 
-    def as_object(self) -> dict:
+    def as_object(self) -> Dict[str, Any]:
         return {
             "type": self.label.name,
             "extra_labels": [],
@@ -80,7 +83,8 @@ class Node:
                 "name": self.name,
                 "level": self.level,
                 "hashed_id": self.hashed_id,
-                "diff_identifier": self.graph_environment.diff_identifier,
+                "diff_identifier": self.graph_environment.diff_identifier if self.graph_environment else "",
+                "layer": self.layer,
             },
         }
 
@@ -91,7 +95,7 @@ class Node:
         pass
 
     def _identifier(self) -> str:
-        identifier = ""
+        identifier: str = ""
 
         if self.parent:
             identifier += self.parent._identifier()
