@@ -1,17 +1,20 @@
 import os
 import time
-from typing import Any, List
+from typing import Any, List, Dict
 
 from dotenv import load_dotenv
 from neo4j import Driver, GraphDatabase, exceptions
 import logging
+
+from blarify.db_managers.db_manager import AbstractDbManager
+from blarify.db_managers.dtos.node_found_by_name_type import NodeFoundByNameTypeDto
 
 logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 
-class Neo4jManager:
+class Neo4jManager(AbstractDbManager):
     entity_id: str
     repo_id: str
     driver: Driver
@@ -54,14 +57,18 @@ class Neo4jManager:
     def create_nodes(self, nodeList: List[Any]):
         # Function to create nodes in the Neo4j database
         with self.driver.session() as session:
-            session.write_transaction(
-                self._create_nodes_txn, nodeList, 100, repoId=self.repo_id, entityId=self.entity_id
+            session.execute_write(
+                self._create_nodes_txn,
+                nodeList,
+                1000,
+                repoId=self.repo_id,
+                entityId=self.entity_id,
             )
 
     def create_edges(self, edgesList: List[Any]):
         # Function to create edges between nodes in the Neo4j database
         with self.driver.session() as session:
-            session.write_transaction(self._create_edges_txn, edgesList, 100, entityId=self.entity_id)
+            session.execute_write(self._create_edges_txn, edgesList, 1000, entityId=self.entity_id, repoId=self.repo_id)
 
     @staticmethod
     def _create_nodes_txn(tx, nodeList: List[Any], batch_size: int, repoId: str, entityId: str):
@@ -81,7 +88,13 @@ class Neo4jManager:
         RETURN batches, total, errorMessages, updateStatistics
         """
 
-        result = tx.run(node_creation_query, nodeList=nodeList, batchSize=batch_size, repoId=repoId, entityId=entityId)
+        result = tx.run(
+            node_creation_query,
+            nodeList=nodeList,
+            batchSize=batch_size,
+            repoId=repoId,
+            entityId=entityId,
+        )
 
         # Fetch the result
         for record in result:
@@ -89,33 +102,40 @@ class Neo4jManager:
             print(record)
 
     @staticmethod
-    def _create_edges_txn(tx, edgesList: List[Any], batch_size: int, entityId: str):
+    def _create_edges_txn(tx, edgesList: List[Any], batch_size: int, entityId: str, repoId: str):
         # Cypher query using apoc.periodic.iterate for creating edges
         edge_creation_query = """
         CALL apoc.periodic.iterate(
             'WITH $edgesList AS edges UNWIND edges AS edgeObject RETURN edgeObject',
-            'MATCH (node1:NODE {node_id: edgeObject.sourceId}) 
-            MATCH (node2:NODE {node_id: edgeObject.targetId}) 
+            'MATCH (node1:NODE {node_id: edgeObject.sourceId, repoId: $repoId, entityId: $entityId}) 
+            MATCH (node2:NODE {node_id: edgeObject.targetId, repoId: $repoId, entityId: $entityId}) 
             CALL apoc.merge.relationship(
             node1, 
             edgeObject.type, 
-            {scopeText: edgeObject.scopeText}, 
+            apoc.map.removeKeys(edgeObject, ["sourceId", "targetId", "type"]), 
             {}, 
             node2, 
             {}
             ) 
             YIELD rel RETURN rel',
-            {batchSize:$batchSize, parallel:false, iterateList: true, params:{edgesList: $edgesList, entityId: $entityId}}
+            {batchSize:$batchSize, parallel:false, iterateList: true, params:{edgesList: $edgesList, entityId: $entityId, repoId: $repoId}}
         )
         YIELD batches, total, errorMessages, updateStatistics
         RETURN batches, total, errorMessages, updateStatistics
         """
         # Execute the query
-        result = tx.run(edge_creation_query, edgesList=edgesList, batchSize=batch_size, entityId=entityId)
+        result = tx.run(
+            edge_creation_query,
+            edgesList=edgesList,
+            batchSize=batch_size,
+            entityId=entityId,
+            repoId=repoId,
+        )
 
         # Fetch the result
         for record in result:
             logger.info(f"Created {record['total']} edges")
+            print(record)
 
     def detatch_delete_nodes_with_path(self, path: str):
         with self.driver.session() as session:
@@ -127,3 +147,72 @@ class Neo4jManager:
                 path=path,
             )
             return result.data()
+
+    def query(self, cypher_query: str, parameters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """
+        Execute a Cypher query and return the results.
+
+        Args:
+            cypher_query: The Cypher query string to execute
+            parameters: Optional dictionary of parameters for the query
+
+        Returns:
+            List of dictionaries containing the query results
+        """
+        if parameters is None:
+            parameters = {}
+
+        try:
+            with self.driver.session() as session:
+                result = session.run(cypher_query, parameters)
+                return [record.data() for record in result]
+        except Exception as e:
+            logger.exception(f"Error executing Neo4j query: {e}")
+            logger.exception(f"Query: {cypher_query}")
+            logger.exception(f"Parameters: {parameters}")
+            raise
+
+    def get_node_by_name_and_type(
+        self, name: str, type: str, company_id: str, repo_id: str, diff_identifier: str
+    ) -> List[NodeFoundByNameTypeDto]:
+        query = """
+        MATCH (n:NODE {name: $name, entityId: $entity_id, repoId: $repo_id})
+        WHERE (n.diff_identifier = $diff_identifier OR n.diff_identifier = "0") AND $type IN labels(n)
+        AND NOT (n)-[:DELETED]->()
+        AND NOT ()-[:MODIFIED]->(n)
+        RETURN n.node_id as node_id, n.name as name, n.label as label,
+               n.diff_text as diff_text, n.diff_identifier as diff_identifier,
+               n.node_path as node_path, n.text as text
+
+        LIMIT 100;
+        """
+        params = {
+            "name": str(name),
+            "entity_id": str(company_id),
+            "repo_id": str(repo_id),
+            "type": str(type),
+            "diff_identifier": str(diff_identifier),
+        }
+        record = self.query(
+            query,
+            parameters=params,
+            result_format="data",
+        )
+
+        if record is None:
+            return []
+
+        found_nodes = [
+            NodeFoundByNameTypeDto(
+                id=node.get("node_id"),
+                name=node.get("name"),
+                label=node.get("label"),
+                diff_text=node.get("diff_text"),
+                node_path=node.get("node_path"),
+                text=node.get("text"),
+                diff_identifier=node.get("diff_identifier"),
+            )
+            for node in record
+        ]
+
+        return found_nodes
